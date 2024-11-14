@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Twitter Clone</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <!-- Navbar -->
+  <nav>
+    <div class="container">
+      <h1>Twitter Clone</h1>
+      <ul class="nav-links">
+        <li><a href="#">Home</a></li>
+        <li><a href="#">Explore</a></li>
+        <li><a href="#">Notifications</a></li>
+        <li><a href="#">Messages</a></li>
+        <li><a href="#">Profile</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <!-- Main Content Area -->
+  <div class="main-container">
+    <!-- Sidebar for Profile Info -->
+    <aside class="sidebar">
+      <h2>@username</h2>
+      <p>Bio: This is a sample bio description for the profile section.</p>
+      <p><strong>Followers:</strong> 120</p>
+      <p><strong>Following:</strong> 80</p>
+    </aside>
+
+    <!-- Tweet Feed -->
+    <section class="feed">
+      <h2>Home</h2>
+
+      <!-- New Tweet Form -->
+      <div class="new-tweet">
+        <textarea placeholder="What's happening?" rows="3"></textarea>
+        <button type="button">Tweet</button>
+      </div>
+
+      <!-- Tweets -->
+      <div class="tweet">
+        <h3>@user1</h3>
+        <p>This is an example tweet content. Exciting stuff happening here!</p>
+        <span>10m ago</span>
+      </div>
+
+      <div class="tweet">
+        <h3>@user2</h3>
+        <p>Another tweet with some content.</p>
+        <span>30m ago</span>
+      </div>
+    </section>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
