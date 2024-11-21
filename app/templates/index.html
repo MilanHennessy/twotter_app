@@ -1,16 +1,22 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Twitter Clone</title>
+  <title>Twotter</title>
   <link rel="stylesheet" href="static/style.css">
+  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script> <!-- Include Axios -->
+  <!-- Inside your body tag, just before the closing </body> tag -->
+  <script src="{{ url_for('static', filename='app.js') }}"></script>
+
 </head>
+
 <body>
   <!-- Navbar -->
   <nav>
     <div class="container">
-      <h1>Twitter Clone</h1>
+      <h1>Twotter</h1>
       <ul class="nav-links">
         <li><a href="#">Home</a></li>
         <li><a href="#">Explore</a></li>
@@ -37,24 +43,69 @@
 
       <!-- New Tweet Form -->
       <div class="new-tweet">
-        <textarea placeholder="What's happening?" rows="3"></textarea>
-        <button type="button">Tweet</button>
+        <textarea id="tweetContent" placeholder="What's happening?" rows="3"></textarea>
+        <button type="button" onclick="postTweet()">Tweet</button>
       </div>
 
       <!-- Tweets -->
-      <div class="tweet">
-        <h3>@user1</h3>
-        <p>This is an example tweet content. Exciting stuff happening here!</p>
-        <span>10m ago</span>
-      </div>
-
-      <div class="tweet">
-        <h3>@user2</h3>
-        <p>Another tweet with some content.</p>
-        <span>30m ago</span>
+      <div id="tweetFeed">
+        <!-- New tweets will appear here -->
       </div>
     </section>
   </div>
 
+  <script>
+    // Function to send the tweet content to the backend
+    function postTweet() {
+      const tweetContent = document.getElementById('tweetContent').value;
+
+      // Check if tweet content is empty
+      if (!tweetContent.trim()) {
+        alert('Tweet content cannot be empty');
+        return;
+      }
+
+      // Send the tweet content to the backend using Axios (without JWT token)
+      axios.post('/tweets', {
+        content: tweetContent
+      })
+        .then(function (response) {
+          console.log('Tweet posted successfully:', response);
+          document.getElementById('tweetContent').value = ''; // Clear the textarea after posting
+          fetchTweets(); // Refresh tweet feed to include the newly posted tweet
+        })
+        .catch(function (error) {
+          console.error('Error posting tweet:', error);
+          alert('Failed to post tweet');
+        });
+    }
+
+    // Function to fetch and display tweets
+    function fetchTweets() {
+      axios.get('/tweets')
+        .then(function (response) {
+          const tweetFeed = document.getElementById('tweetFeed');
+          tweetFeed.innerHTML = ''; // Clear the current tweets
+
+          response.data.forEach(function (tweet) {
+            const tweetElement = document.createElement('div');
+            tweetElement.classList.add('tweet');
+            tweetElement.innerHTML = `
+            <h3>@${tweet.author}</h3>
+            <p>${tweet.content}</p>
+            <span>${tweet.created_at}</span>
+          `;
+            tweetFeed.appendChild(tweetElement);
+          });
+        })
+        .catch(function (error) {
+          console.error('Error fetching tweets:', error);
+        });
+    }
+
+    // Fetch and display tweets when the page loads
+    window.onload = fetchTweets;
+  </script>
 </body>
+
 </html>

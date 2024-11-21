@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Twotter</title>
+    <link rel="stylesheet" href="static/style.css">
+
+    <!-- Include Axios CDN before your custom script -->
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+
+    <!-- Inside your body tag, just before the closing </body> tag -->
+    <script src="{{ url_for('static', filename='app.js') }}"></script>
+</head>
+
+<body>
+    <!-- Navbar (optional for login page) -->
+    <nav>
+        <div class="container">
+            <h1>Twotter</h1>
+        </div>
+    </nav>
+
+    <!-- Main Content Area -->
+    <div class="main-container">
+        <!-- Sidebar (optional for login page) -->
+        <aside class="sidebar" style="display: none;">
+            <h2>@username</h2>
+            <p>Bio: This is a sample bio description for the profile section.</p>
+            <p><strong>Followers:</strong> 120</p>
+            <p><strong>Following:</strong> 80</p>
+        </aside>
+
+        <!-- Login Form -->
+        <section class="login-form">
+            <h2>Login</h2>
+
+            <form id="loginForm">
+                <div class="form-group">
+                    <label for="username">Username</label>
+                    <input type="text" id="username" placeholder="Enter your username" required />
+                </div>
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" placeholder="Enter your password" required />
+                </div>
+                <button type="submit">Login</button>
+            </form>
+
+            <p>Don't have an account? <a href="/register">Sign up</a></p>
+        </section>
+    </div>
+
+    <script>
+        // Function to handle login
+        function handleLogin(event) {
+            event.preventDefault();
+
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+
+            // Send the login credentials to the backend using Axios
+            axios.post('/', {
+                username: username,
+                password: password
+            })
+            .then(function (response) {
+                console.log('Login successful:', response);
+
+                // Now that the user is logged in, we can store the user ID in sessionStorage
+                sessionStorage.setItem('user_id', response.data.user_id);  // Store user ID instead of JWT
+
+                // Redirect to the index page after successful login
+                window.location.href = '/index'; 
+            })
+            .catch(function (error) {
+                console.error('Error logging in:', error);
+                alert('Invalid credentials or login failed');
+            });
+        }
+
+        // Attach event listener to the form submit event
+        document.getElementById('loginForm').addEventListener('submit', handleLogin);
+    </script>
+</body>
+
+</html>
