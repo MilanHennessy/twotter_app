@@ -1,112 +1,90 @@
-from flask import Flask, render_template, request, redirect, url_for, jsonify, session
+from flask import Flask, session, redirect, url_for, request, render_template, jsonify
 from flask_cors import CORS
+import tweepy
 from config import Config
-from extensions import db
-from werkzeug.security import generate_password_hash, check_password_hash
-from models import User  # Assuming the User model is in 'models.py'
 
-def create_app():
-    app = Flask(
-        __name__,
-        static_folder="static",  # Folder for CSS, JS, and images
-        template_folder="templates"  # Folder for HTML files
-    )
-    app.config.from_object(Config)
-    db.init_app(app)
-    CORS(app)
+app = Flask(__name__, static_folder="static", template_folder="templates")
+app.config.from_object(Config)  # Load configuration from Config class
+CORS(app)
 
-    # Register blueprints (if applicable)
-    from routes.auth import auth_bp
-    from routes.tweets import tweets_bp
-    from routes.users import users_bp
+# Twitter API Authentication Setup
+auth = tweepy.OAuthHandler(Config.TWITTER_CONSUMER_KEY, Config.TWITTER_CONSUMER_SECRET)
+auth.set_access_token(Config.TWITTER_ACCESS_TOKEN, Config.TWITTER_ACCESS_SECRET)
 
-    app.register_blueprint(auth_bp)
-    app.register_blueprint(tweets_bp)
-    app.register_blueprint(users_bp)
+api = tweepy.API(auth)
 
-    # Route for the login page
-    @app.route("/", methods=["GET", "POST"])
-    def login():
-        if request.method == "POST":
-            data = request.get_json()  # Get the JSON data from the request
+@app.route("/")
+def home():
+    """Default homepage route"""
+    if 'user_id' in session:
+        # If user is logged in, show their Twitter profile and a welcome message
+        user = api.me()
+        return render_template("index.html", user=user)
+    else:
+        # If user is not logged in, redirect to Twitter login
+        return redirect(url_for("login"))
 
-            # Check if JSON has username and password fields
-            if not data or "username" not in data or "password" not in data:
-                return jsonify({"message": "Missing username or password"}), 400
+@app.route("/login")
+def login():
+    """Redirect user to Twitter login page"""
+    try:
+        auth_url = auth.get_authorization_url()
+        session['request_token'] = auth.request_token
+        return redirect(auth_url)
+    except tweepy.TweepyException as e:  # Change to TweepyException
+        return jsonify({"message": f"Failed to get request token from Twitter: {str(e)}"}), 400
 
-            username = data["username"]
-            password = data["password"]
+@app.route("/callback")
+def callback():
+    """Handle the callback after user authorizes Twitter"""
+    request_token = session.pop('request_token', None)
+    if request_token:
+        auth.request_token = request_token
+        try:
+            auth.get_access_token(request.args['oauth_verifier'])
+            session['access_token'] = auth.access_token
+            session['access_token_secret'] = auth.access_token_secret
 
-            # Check if the username exists
-            user = User.query.filter_by(username=username).first()
-            if user and user.check_password(password):  # Check if password matches
-                # Successful login, no need for JWT, just start the session
-                session["user_id"] = user.id  # Store user ID in session
+            # Get user's details
+            user = api.me()
 
-                # Debug: Print the session to verify user ID storage
-                print("User ID stored in session:", session.get("user_id"))
+            # Save user info to session
+            session['user_id'] = user.id
+            session['username'] = user.screen_name
+            session['profile_image'] = user.profile_image_url
 
-                # Return success response
-                return jsonify({"message": "Login successful"}), 200
+            # Redirect to homepage after login
+            return redirect(url_for('home'))
 
-            # If login failed
-            return jsonify({"message": "Invalid username or password. Please try again."}), 401
+        except tweepy.TweepyException as e:  # Change to TweepyException
+            return jsonify({"message": f"Failed to get access token from Twitter: {str(e)}"}), 400
+    return jsonify({"message": "Request token missing."}), 400
 
-        # If it's a GET request, render the login form
-        return render_template("login.html")
+@app.route("/logout")
+def logout():
+    """Logout the user and clear session"""
+    session.pop('user_id', None)
+    session.pop('username', None)
+    session.pop('profile_image', None)
+    session.pop('access_token', None)
+    session.pop('access_token_secret', None)
+    return redirect(url_for('home'))
 
-    # Route to handle user registration
-    @app.route("/register", methods=["GET", "POST"])
-    def register():
-        if request.method == "POST":
-            data = request.get_json()  # Get the JSON data from the request
-
-            # Validate data
-            if not data or "username" not in data or "password" not in data:
-                return jsonify({"message": "Missing username or password"}), 400
-
-            username = data["username"]
-            password = data["password"]
-
-            # Check if the username already exists
-            existing_user = User.query.filter_by(username=username).first()
-            if existing_user:
-                return jsonify({"message": "Username already exists. Please choose another one."}), 400
-
-            # Hash the password
-            hashed_password = generate_password_hash(password)
-
-            # Create the new user and save to the database
-            new_user = User(username=username, password=hashed_password)
-            db.session.add(new_user)
-            db.session.commit()
-
-            # Return success message
-            return jsonify({"message": "User successfully registered."}), 201
-
-        # If it's a GET request, render the registration form
-        return render_template("register.html")
-
-    # Index Route - Home page, requires user to be authenticated via session
-    @app.route("/index")
-    def index():
-        user_id = session.get("user_id")  # Get user ID from session
-        
-        if not user_id:
-            return jsonify({"message": "You must be logged in to view this page."}), 401
-
-        # Get the user details from the database
-        user = User.query.filter_by(id=user_id).first()
-
-        if user:
-            # User is authenticated, render the index page
-            return render_template("index.html", username=user.username)  # pass username or any user info to the page
-        else:
-            return jsonify({"message": "User not found!"}), 404
-
-    return app
-
-app = create_app()
+@app.route("/tweet", methods=["POST"])
+def tweet():
+    """Post a tweet to the user's Twitter account"""
+    if 'user_id' not in session:
+        return jsonify({"message": "Login required."}), 401
+    
+    tweet_content = request.form.get("tweet_content")
+    if tweet_content:
+        try:
+            api.update_status(tweet_content)
+            return jsonify({"message": "Tweet posted successfully!"})
+        except tweepy.TweepyException as e:  # Change to TweepyException
+            return jsonify({"message": f"Error posting tweet: {str(e)}"}), 400
+    else:
+        return jsonify({"message": "No content provided for the tweet."}), 400
 
 if __name__ == "__main__":
     app.run(debug=True)
