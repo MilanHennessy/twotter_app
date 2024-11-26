@@ -1,4 +1,4 @@
-from flask import Flask, redirect, request, session, url_for
+from flask import Flask, redirect, request, session, url_for, render_template
 import tweepy
 import os
 import requests
@@ -52,9 +52,16 @@ def twitter_callback():
     if response.status_code == 200:
         # Save the token to the session
         session['twitter_token'] = response.json()['access_token']
-        return redirect(url_for('profile'))
+
+        # Redirect to the custom HTML page (home.html)
+        return redirect(url_for('home_page'))
     else:
         return "Error during token exchange"
+
+@app.route('/home')
+def home_page():
+    # This will render the home.html template
+    return render_template('index.html')
 
 @app.route('/profile')
 def profile():
