@@ -12,9 +12,9 @@
             <h1>Welcome to MyApp, {{ user['name'] }}</h1>
             <div class="profile-info">
                 <img src="{{ user['avatarUrl'] }}" alt="Profile Picture" class="profile-pic">
-                <p>Username: {{ user['username'] }}</p>
-                <p>Email: {{ user['email'] }}</p>
-                <p>Website: <a href="{{ user['website'] }}">{{ user['website'] }}</a></p>
+                <h2>{{ user['name'] }}</h2>
+                <p><strong>@{{ user['username'] }}</strong></p>
+                <p class="bio">{{ user['bio'] }}</p>
             </div>
         </header>
 
@@ -25,13 +25,20 @@
         </div>
 
         <section class="tweet-feed">
-            <h2>Your Tweets</h2>
+            <h2>Your Feed</h2>
             {% if posts %}
                 <ul>
                     {% for post in posts %}
-                        <li>
-                            <strong>{{ post['title'] }}</strong>
-                            <p>{{ post['body'] }}</p>
+                        <li class="tweet">
+                            <div class="tweet-header">
+                                <span class="username">@{{ post['username'] }}</span>
+                                <span class="tweet-time">{{ post['timestamp'] }}</span>
+                            </div>
+                            <p class="tweet-body">{{ post['body'] }}</p>
+                            <div class="tweet-footer">
+                                <span class="like-count">{{ post['likeCount'] }} Likes</span>
+                                <button class="like-btn">Like</button>
+                            </div>
                         </li>
                     {% endfor %}
                 </ul>
@@ -39,6 +46,19 @@
                 <p>No tweets available.</p>
             {% endif %}
         </section>
+        
     </div>
+
+    <script>
+        // Optional JavaScript to handle like functionality (you may need to update the backend for actual like functionality)
+        document.querySelectorAll('.like-btn').forEach(button => {
+            button.addEventListener('click', function() {
+                let tweetItem = this.closest('.tweet');
+                let likeCount = tweetItem.querySelector('.like-count');
+                let currentLikes = parseInt(likeCount.textContent);
+                likeCount.textContent = (currentLikes + 1) + " Likes";
+            });
+        });
+    </script>
 </body>
 </html>

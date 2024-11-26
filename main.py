@@ -1,8 +1,8 @@
 from flask import Flask, redirect, url_for, render_template, session, request, flash
+import requests
 from models import User
 from extensions import db
-import requests
-from werkzeug.security import generate_password_hash, check_password_hash
+from helpers import get_tweets, generate_random_like_count, generate_random_username
 
 app = Flask(__name__)
 app.secret_key = 'your_secret_key'  # Set a secret key for sessions
@@ -14,30 +14,17 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 # Initialize SQLAlchemy
 db.init_app(app)
 
-# JSONPlaceholder API Base URL
-API_BASE_URL = "https://jsonplaceholder.typicode.com"
-
-
 @app.route('/')
 def home():
-    # If the user is not logged in, redirect to login page
     if 'user_id' not in session:
         return redirect(url_for('login'))
 
     user_id = session['user_id']
-    username = session['username']
+    
+    # Fetch user and posts
+    user, posts = get_tweets(user_id)
 
-    # Simulate fetching user data and posts from JSONPlaceholder
-    response_user = requests.get(f"{API_BASE_URL}/users/{user_id}")
-    response_posts = requests.get(f"{API_BASE_URL}/posts", params={"userId": user_id})
-    if response_user.status_code == 200 and response_posts.status_code == 200:
-        user = response_user.json()
-        posts = response_posts.json()
-
-        return render_template('home.html', user=user, posts=posts)
-    return "Error fetching profile and posts data."
-
-
+    return render_template('home.html', user=user, posts=posts)
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -51,17 +38,15 @@ def login():
             # Store user data in session
             session['user_id'] = user.id
             session['username'] = user.username
-            return redirect(url_for('profile'))
+            return redirect(url_for('home'))
 
         flash('Invalid username or password. Please try again.')
     return render_template('login.html')
-
 
 @app.route('/logout')
 def logout():
     session.clear()  # Clears the session to log the user out
     return redirect(url_for('home'))
-
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
@@ -87,18 +72,16 @@ def register():
 
     return render_template('register.html')
 
-
 @app.route('/profile')
 def profile():
     if 'user_id' not in session:
         return redirect(url_for('login'))
 
     user_id = session['user_id']
-    username = session['username']
-
-    # Simulate fetching posts and user data from the JSONPlaceholder API
-    response_user = requests.get(f"{API_BASE_URL}/users/{user_id}")
-    response_posts = requests.get(f"{API_BASE_URL}/posts", params={"userId": user_id})
+    
+    # Simulate fetching posts and user data
+    response_user = requests.get(f"https://jsonplaceholder.typicode.com/users/{user_id}")
+    response_posts = requests.get(f"https://jsonplaceholder.typicode.com/posts", params={"userId": user_id})
     
     user = None
     posts = []
@@ -111,7 +94,6 @@ def profile():
 
     return render_template('profile.html', user=user, posts=posts)
 
-
 @app.route('/tweets', methods=['GET', 'POST'])
 def tweets():
     if 'user_id' not in session:
@@ -123,7 +105,8 @@ def tweets():
             flash('Tweet content cannot be empty.')
             return redirect(url_for('tweets'))
 
-        response = requests.post(f"{API_BASE_URL}/posts", json={
+        # Create a new tweet
+        response = requests.post(f"https://jsonplaceholder.typicode.com/posts", json={
             "title": "New Tweet",
             "body": content,
             "userId": session['user_id']
@@ -133,12 +116,11 @@ def tweets():
         else:
             flash('Error posting tweet.')
 
-    response = requests.get(f"{API_BASE_URL}/posts")
+    response = requests.get(f"https://jsonplaceholder.typicode.com/posts")
     if response.status_code == 200:
         tweets = response.json()
         return render_template('tweets.html', tweets=tweets)
     return "Error fetching tweets."
-
 
 if __name__ == '__main__':
     with app.app_context():

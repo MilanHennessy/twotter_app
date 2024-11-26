@@ -1,19 +1,41 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Profile</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profile - MyApp</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
 </head>
 <body>
-    <h1>Welcome, {{ user.username }}</h1>
-    <h2>Your Tweets:</h2>
-    <ul>
-        {% for tweet in tweets %}
-            <li>{{ tweet.content }} - {{ tweet.created_at }}</li>
-        {% endfor %}
-    </ul>
-    <a href="{{ url_for('tweets') }}">Create/View Tweets</a>
-    <br>
-    <a href="{{ url_for('logout') }}">Logout</a>
+    <div class="container">
+        <header>
+            <h1>{{ user['name'] }}'s Profile</h1>
+        </header>
+
+        <section class="profile-info">
+            <img src="{{ user['avatarUrl'] }}" alt="Profile Picture" class="profile-pic">
+            <p>Username: {{ user['username'] }}</p>
+            <p>Email: {{ user['email'] }}</p>
+            <p>Website: <a href="{{ user['website'] }}">{{ user['website'] }}</a></p>
+        </section>
+
+        <section class="tweet-feed">
+            <h2>Posts</h2>
+            {% if posts %}
+                <ul>
+                    {% for post in posts %}
+                        <li class="tweet">
+                            <strong>{{ post['title'] }}</strong>
+                            <p>{{ post['body'] }}</p>
+                        </li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <p>No posts available.</p>
+            {% endif %}
+        </section>
+
+        <a href="{{ url_for('home') }}" class="btn">Back to Home</a>
+    </div>
 </body>
 </html>
