@@ -1,90 +1,76 @@
-from flask import Flask, session, redirect, url_for, request, render_template, jsonify
-from flask_cors import CORS
+from flask import Flask, redirect, request, session, url_for
 import tweepy
-from config import Config
+import os
+import requests
 
-app = Flask(__name__, static_folder="static", template_folder="templates")
-app.config.from_object(Config)  # Load configuration from Config class
-CORS(app)
+app = Flask(__name__)
+app.secret_key = os.urandom(24)
 
-# Twitter API Authentication Setup
-auth = tweepy.OAuthHandler(Config.TWITTER_CONSUMER_KEY, Config.TWITTER_CONSUMER_SECRET)
-auth.set_access_token(Config.TWITTER_ACCESS_TOKEN, Config.TWITTER_ACCESS_SECRET)
+# Twitter API credentials (replace with your actual credentials)
+CLIENT_ID = 'your-client-id'
+CLIENT_SECRET = 'your-client-secret'
+REDIRECT_URI = 'http://127.0.0.1:5000/twitter_callback'
 
-api = tweepy.API(auth)
+# Set the API URLs
+AUTHORIZATION_URL = "https://twitter.com/i/oauth2/authorize"
+TOKEN_URL = "https://api.twitter.com/oauth2/token"
 
-@app.route("/")
+# Set up Tweepy client (without authentication initially)
+client = tweepy.Client(bearer_token="your-bearer-token")
+
+@app.route('/')
 def home():
-    """Default homepage route"""
-    if 'user_id' in session:
-        # If user is logged in, show their Twitter profile and a welcome message
-        user = api.me()
-        return render_template("index.html", user=user)
+    if 'twitter_token' in session:
+        return redirect(url_for('profile'))
     else:
-        # If user is not logged in, redirect to Twitter login
-        return redirect(url_for("login"))
+        return redirect(url_for('login'))
 
-@app.route("/login")
+@app.route('/login')
 def login():
-    """Redirect user to Twitter login page"""
-    try:
-        auth_url = auth.get_authorization_url()
-        session['request_token'] = auth.request_token
-        return redirect(auth_url)
-    except tweepy.TweepyException as e:  # Change to TweepyException
-        return jsonify({"message": f"Failed to get request token from Twitter: {str(e)}"}), 400
+    # Construct authorization URL with the necessary query parameters
+    auth_url = f"{AUTHORIZATION_URL}?response_type=code&client_id={CLIENT_ID}&redirect_uri={REDIRECT_URI}&scope=tweet.read users.read"
+    return redirect(auth_url)
 
-@app.route("/callback")
-def callback():
-    """Handle the callback after user authorizes Twitter"""
-    request_token = session.pop('request_token', None)
-    if request_token:
-        auth.request_token = request_token
-        try:
-            auth.get_access_token(request.args['oauth_verifier'])
-            session['access_token'] = auth.access_token
-            session['access_token_secret'] = auth.access_token_secret
+@app.route('/callback')
+def twitter_callback():
+    # Twitter redirects here with the authorization code
+    code = request.args.get('code')
 
-            # Get user's details
-            user = api.me()
+    if not code:
+        return "Error: No code returned"
 
-            # Save user info to session
-            session['user_id'] = user.id
-            session['username'] = user.screen_name
-            session['profile_image'] = user.profile_image_url
+    # Exchange the authorization code for an access token
+    token_data = {
+        'code': code,
+        'grant_type': 'authorization_code',
+        'redirect_uri': REDIRECT_URI,
+        'client_id': CLIENT_ID,
+        'client_secret': CLIENT_SECRET
+    }
 
-            # Redirect to homepage after login
-            return redirect(url_for('home'))
-
-        except tweepy.TweepyException as e:  # Change to TweepyException
-            return jsonify({"message": f"Failed to get access token from Twitter: {str(e)}"}), 400
-    return jsonify({"message": "Request token missing."}), 400
-
-@app.route("/logout")
-def logout():
-    """Logout the user and clear session"""
-    session.pop('user_id', None)
-    session.pop('username', None)
-    session.pop('profile_image', None)
-    session.pop('access_token', None)
-    session.pop('access_token_secret', None)
-    return redirect(url_for('home'))
-
-@app.route("/tweet", methods=["POST"])
-def tweet():
-    """Post a tweet to the user's Twitter account"""
-    if 'user_id' not in session:
-        return jsonify({"message": "Login required."}), 401
-    
-    tweet_content = request.form.get("tweet_content")
-    if tweet_content:
-        try:
-            api.update_status(tweet_content)
-            return jsonify({"message": "Tweet posted successfully!"})
-        except tweepy.TweepyException as e:  # Change to TweepyException
-            return jsonify({"message": f"Error posting tweet: {str(e)}"}), 400
+    response = requests.post(TOKEN_URL, data=token_data)
+    if response.status_code == 200:
+        # Save the token to the session
+        session['twitter_token'] = response.json()['access_token']
+        return redirect(url_for('profile'))
     else:
-        return jsonify({"message": "No content provided for the tweet."}), 400
+        return "Error during token exchange"
 
-if __name__ == "__main__":
+@app.route('/profile')
+def profile():
+    if 'twitter_token' not in session:
+        return redirect(url_for('login'))
+
+    # Create a Tweepy client with the access token
+    access_token = session['twitter_token']
+    client = tweepy.Client(bearer_token=access_token)
+
+    try:
+        # Fetch the authenticated user's profile
+        user = client.get_me()
+        return f'Hello {user.data["name"]}, your Twitter handle is @{user.data["username"]}.'
+    except tweepy.TweepyException as e:
+        return f'Error fetching user info: {e}'
+
+if __name__ == '__main__':
     app.run(debug=True)

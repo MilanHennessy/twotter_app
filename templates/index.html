@@ -1,111 +1,17 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Twotter</title>
-  <link rel="stylesheet" href="static/style.css">
-  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script> <!-- Include Axios -->
-  <!-- Inside your body tag, just before the closing </body> tag -->
-  <script src="{{ url_for('static', filename='app.js') }}"></script>
-
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Home</title>
 </head>
-
 <body>
-  <!-- Navbar -->
-  <nav>
-    <div class="container">
-      <h1>Twotter</h1>
-      <ul class="nav-links">
-        <li><a href="#">Home</a></li>
-        <li><a href="#">Explore</a></li>
-        <li><a href="#">Notifications</a></li>
-        <li><a href="#">Messages</a></li>
-        <li><a href="#">Profile</a></li>
-      </ul>
-    </div>
-  </nav>
-
-  <!-- Main Content Area -->
-  <div class="main-container">
-    <!-- Sidebar for Profile Info -->
-    <aside class="sidebar">
-      <h2>@username</h2>
-      <p>Bio: This is a sample bio description for the profile section.</p>
-      <p><strong>Followers:</strong> 120</p>
-      <p><strong>Following:</strong> 80</p>
-    </aside>
-
-    <!-- Tweet Feed -->
-    <section class="feed">
-      <h2>Home</h2>
-
-      <!-- New Tweet Form -->
-      <div class="new-tweet">
-        <textarea id="tweetContent" placeholder="What's happening?" rows="3"></textarea>
-        <button type="button" onclick="postTweet()">Tweet</button>
-      </div>
-
-      <!-- Tweets -->
-      <div id="tweetFeed">
-        <!-- New tweets will appear here -->
-      </div>
-    </section>
-  </div>
-
-  <script>
-    // Function to send the tweet content to the backend
-    function postTweet() {
-      const tweetContent = document.getElementById('tweetContent').value;
-
-      // Check if tweet content is empty
-      if (!tweetContent.trim()) {
-        alert('Tweet content cannot be empty');
-        return;
-      }
-
-      // Send the tweet content to the backend using Axios (without JWT token)
-      axios.post('/tweets', {
-        content: tweetContent
-      })
-        .then(function (response) {
-          console.log('Tweet posted successfully:', response);
-          document.getElementById('tweetContent').value = ''; // Clear the textarea after posting
-          fetchTweets(); // Refresh tweet feed to include the newly posted tweet
-        })
-        .catch(function (error) {
-          console.error('Error posting tweet:', error);
-          alert('Failed to post tweet');
-        });
-    }
-
-    // Function to fetch and display tweets
-    function fetchTweets() {
-      axios.get('/tweets')
-        .then(function (response) {
-          const tweetFeed = document.getElementById('tweetFeed');
-          tweetFeed.innerHTML = ''; // Clear the current tweets
-
-          response.data.forEach(function (tweet) {
-            const tweetElement = document.createElement('div');
-            tweetElement.classList.add('tweet');
-            tweetElement.innerHTML = `
-            <h3>@${tweet.author}</h3>
-            <p>${tweet.content}</p>
-            <span>${tweet.created_at}</span>
-          `;
-            tweetFeed.appendChild(tweetElement);
-          });
-        })
-        .catch(function (error) {
-          console.error('Error fetching tweets:', error);
-        });
-    }
-
-    // Fetch and display tweets when the page loads
-    window.onload = fetchTweets;
-  </script>
+    <h1>Welcome to Twitter Clone</h1>
+    {% if session['user'] %}
+        <p>You are logged in as {{ session['user'] }}</p>
+        <a href="{{ url_for('index') }}">Go to Home</a>
+    {% else %}
+        <p>You are not logged in. <a href="{{ url_for('login') }}">Login with Twitter</a></p>
+    {% endif %}
 </body>
-
 </html>
