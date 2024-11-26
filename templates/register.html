@@ -1,56 +1,31 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Register - Twotter</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-    <!-- Include the JavaScript file just before the closing </body> tag -->
-    <script src="{{ url_for('static', filename='app.js') }}"></script>
+    <title>Register</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
 </head>
-
 <body>
-    <!-- Navbar -->
-    <nav>
-        <div class="container">
-            <h1>Twotter</h1>
-        </div>
-    </nav>
+    <h2>Register</h2>
+    <form method="POST" action="{{ url_for('register') }}">
+        <label>Username:</label>
+        <input type="text" name="username" required><br>
+        <label>Password:</label>
+        <input type="password" name="password" required><br>
+        <button type="submit">Register</button>
+    </form>
 
-    <!-- Main Content Area -->
-    <div class="main-container">
-        <!-- Register Form -->
-        <section class="register-form">
-            <h2>Register</h2>
+    <p>Already have an account? <a href="{{ url_for('login') }}">Login here</a></p>
 
-            <!-- Update the form to have an ID so we can target it with JavaScript -->
-            <form id="register-form">
-                <div class="form-group">
-                    <label for="username">Username</label>
-                    <input type="text" id="register-username" name="username" placeholder="Enter a username" required />
-                </div>
-                <div class="form-group">
-                    <label for="password">Password</label>
-                    <input type="password" id="register-password" name="password" placeholder="Enter a password" required />
-                </div>
-                <button type="submit">Register</button>
-            </form>
-
-            <p>Already have an account? <a href="/#">Login here</a></p>
-        </section>
-    </div>
-
-    <!-- Flash message (optional) -->
     {% with messages = get_flashed_messages() %}
         {% if messages %}
-            <div class="flash-message">
+            <ul>
                 {% for message in messages %}
-                    <p>{{ message }}</p>
+                    <li>{{ message }}</li>
                 {% endfor %}
-            </div>
+            </ul>
         {% endif %}
     {% endwith %}
 </body>
-
 </html>

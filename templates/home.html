@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Home - MyApp</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Welcome to MyApp, {{ user['name'] }}</h1>
+            <div class="profile-info">
+                <img src="{{ user['avatarUrl'] }}" alt="Profile Picture" class="profile-pic">
+                <p>Username: {{ user['username'] }}</p>
+                <p>Email: {{ user['email'] }}</p>
+                <p>Website: <a href="{{ user['website'] }}">{{ user['website'] }}</a></p>
+            </div>
+        </header>
+
+        <div class="actions">
+            <a href="{{ url_for('tweets') }}" class="btn">Post a Tweet</a>
+            <a href="{{ url_for('profile') }}" class="btn">Go to Profile</a>
+            <a href="{{ url_for('logout') }}" class="btn">Logout</a>
+        </div>
+
+        <section class="tweet-feed">
+            <h2>Your Tweets</h2>
+            {% if posts %}
+                <ul>
+                    {% for post in posts %}
+                        <li>
+                            <strong>{{ post['title'] }}</strong>
+                            <p>{{ post['body'] }}</p>
+                        </li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <p>No tweets available.</p>
+            {% endif %}
+        </section>
+    </div>
+</body>
+</html>

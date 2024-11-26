@@ -1,83 +1,146 @@
-from flask import Flask, redirect, request, session, url_for, render_template
-import tweepy
-import os
+from flask import Flask, redirect, url_for, render_template, session, request, flash
+from models import User
+from extensions import db
 import requests
+from werkzeug.security import generate_password_hash, check_password_hash
 
 app = Flask(__name__)
-app.secret_key = os.urandom(24)
+app.secret_key = 'your_secret_key'  # Set a secret key for sessions
 
-# Twitter API credentials (replace with your actual credentials)
-CLIENT_ID = 'your-client-id'
-CLIENT_SECRET = 'your-client-secret'
-REDIRECT_URI = 'http://127.0.0.1:5000/twitter_callback'
+# Database configuration
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///app.db'  # Update this with your actual database URI
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
-# Set the API URLs
-AUTHORIZATION_URL = "https://twitter.com/i/oauth2/authorize"
-TOKEN_URL = "https://api.twitter.com/oauth2/token"
+# Initialize SQLAlchemy
+db.init_app(app)
 
-# Set up Tweepy client (without authentication initially)
-client = tweepy.Client(bearer_token="your-bearer-token")
+# JSONPlaceholder API Base URL
+API_BASE_URL = "https://jsonplaceholder.typicode.com"
+
 
 @app.route('/')
 def home():
-    if 'twitter_token' in session:
-        return redirect(url_for('profile'))
-    else:
+    # If the user is not logged in, redirect to login page
+    if 'user_id' not in session:
         return redirect(url_for('login'))
 
-@app.route('/login')
+    user_id = session['user_id']
+    username = session['username']
+
+    # Simulate fetching user data and posts from JSONPlaceholder
+    response_user = requests.get(f"{API_BASE_URL}/users/{user_id}")
+    response_posts = requests.get(f"{API_BASE_URL}/posts", params={"userId": user_id})
+    if response_user.status_code == 200 and response_posts.status_code == 200:
+        user = response_user.json()
+        posts = response_posts.json()
+
+        return render_template('home.html', user=user, posts=posts)
+    return "Error fetching profile and posts data."
+
+
+
+@app.route('/login', methods=['GET', 'POST'])
 def login():
-    # Construct authorization URL with the necessary query parameters
-    auth_url = f"{AUTHORIZATION_URL}?response_type=code&client_id={CLIENT_ID}&redirect_uri={REDIRECT_URI}&scope=tweet.read users.read"
-    return redirect(auth_url)
+    if request.method == 'POST':
+        username = request.form.get('username')
+        password = request.form.get('password')
 
-@app.route('/callback')
-def twitter_callback():
-    # Twitter redirects here with the authorization code
-    code = request.args.get('code')
+        # Look for user in the local database
+        user = User.query.filter_by(username=username).first()
+        if user and user.check_password(password):
+            # Store user data in session
+            session['user_id'] = user.id
+            session['username'] = user.username
+            return redirect(url_for('profile'))
 
-    if not code:
-        return "Error: No code returned"
+        flash('Invalid username or password. Please try again.')
+    return render_template('login.html')
 
-    # Exchange the authorization code for an access token
-    token_data = {
-        'code': code,
-        'grant_type': 'authorization_code',
-        'redirect_uri': REDIRECT_URI,
-        'client_id': CLIENT_ID,
-        'client_secret': CLIENT_SECRET
-    }
 
-    response = requests.post(TOKEN_URL, data=token_data)
-    if response.status_code == 200:
-        # Save the token to the session
-        session['twitter_token'] = response.json()['access_token']
+@app.route('/logout')
+def logout():
+    session.clear()  # Clears the session to log the user out
+    return redirect(url_for('home'))
 
-        # Redirect to the custom HTML page (home.html)
-        return redirect(url_for('home_page'))
-    else:
-        return "Error during token exchange"
 
-@app.route('/home')
-def home_page():
-    # This will render the home.html template
-    return render_template('index.html')
+@app.route('/register', methods=['GET', 'POST'])
+def register():
+    if request.method == 'POST':
+        username = request.form.get('username')
+        password = request.form.get('password')
+
+        # Check if the username already exists in the database
+        existing_user = User.query.filter_by(username=username).first()
+        if existing_user:
+            flash('Username already exists. Please choose another one.', 'danger')
+            return redirect(url_for('register'))
+
+        # If username is unique, create a new user and hash the password
+        new_user = User(username=username)
+        new_user.set_password(password)
+
+        db.session.add(new_user)
+        db.session.commit()
+
+        flash('Registration successful! You can now log in.', 'success')
+        return redirect(url_for('login'))
+
+    return render_template('register.html')
+
 
 @app.route('/profile')
 def profile():
-    if 'twitter_token' not in session:
+    if 'user_id' not in session:
         return redirect(url_for('login'))
 
-    # Create a Tweepy client with the access token
-    access_token = session['twitter_token']
-    client = tweepy.Client(bearer_token=access_token)
+    user_id = session['user_id']
+    username = session['username']
 
-    try:
-        # Fetch the authenticated user's profile
-        user = client.get_me()
-        return f'Hello {user.data["name"]}, your Twitter handle is @{user.data["username"]}.'
-    except tweepy.TweepyException as e:
-        return f'Error fetching user info: {e}'
+    # Simulate fetching posts and user data from the JSONPlaceholder API
+    response_user = requests.get(f"{API_BASE_URL}/users/{user_id}")
+    response_posts = requests.get(f"{API_BASE_URL}/posts", params={"userId": user_id})
+    
+    user = None
+    posts = []
+    
+    if response_user.status_code == 200:
+        user = response_user.json()
+
+    if response_posts.status_code == 200:
+        posts = response_posts.json()
+
+    return render_template('profile.html', user=user, posts=posts)
+
+
+@app.route('/tweets', methods=['GET', 'POST'])
+def tweets():
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+
+    if request.method == 'POST':
+        content = request.form.get('content')
+        if not content:
+            flash('Tweet content cannot be empty.')
+            return redirect(url_for('tweets'))
+
+        response = requests.post(f"{API_BASE_URL}/posts", json={
+            "title": "New Tweet",
+            "body": content,
+            "userId": session['user_id']
+        })
+        if response.status_code == 201:
+            flash('Tweet posted successfully!')
+        else:
+            flash('Error posting tweet.')
+
+    response = requests.get(f"{API_BASE_URL}/posts")
+    if response.status_code == 200:
+        tweets = response.json()
+        return render_template('tweets.html', tweets=tweets)
+    return "Error fetching tweets."
+
 
 if __name__ == '__main__':
+    with app.app_context():
+        db.create_all()  # Ensure the database is initialized
     app.run(debug=True)
