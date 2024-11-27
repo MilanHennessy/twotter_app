@@ -9,30 +9,31 @@
 <body>
     <div class="container">
         <header>
-            <h1>{{ user['name'] }}'s Profile</h1>
+            <h1>{{ user['username'] }}'s Profile</h1>
         </header>
 
         <section class="profile-info">
             <p>Username: {{ user['username'] }}</p>
         </section>
 
+        <!-- Move the back to home button here -->
+        <a href="{{ url_for('home') }}" class="btn">Back to Home</a>
+
         <section class="tweet-feed">
-            <h2>Posts</h2>
+            <h2>Your Tweets</h2>
             {% if posts %}
                 <ul>
                     {% for post in posts %}
                         <li class="tweet">
-                            <strong>{{ post['title'] }}</strong>
-                            <p>{{ post['body'] }}</p>
+                            <strong>{{ post.content }}</strong>  <!-- Display tweet content -->
+                            <p>{{ post.created_at.strftime('%Y-%m-%d %H:%M:%S') }}</p>  <!-- Display timestamp -->
                         </li>
                     {% endfor %}
                 </ul>
             {% else %}
-                <p>No posts available.</p>
+                <p>No tweets available.</p>
             {% endif %}
         </section>
-
-        <a href="{{ url_for('home') }}" class="btn">Back to Home</a>
     </div>
 </body>
 </html>

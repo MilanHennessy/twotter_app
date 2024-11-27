@@ -143,9 +143,11 @@ def profile():
     user_id = session['user_id']
     username = session['username']
 
+    # Query to fetch all tweets for the logged-in user
     db_posts = Tweet.query.filter_by(user_id=user_id).order_by(Tweet.created_at.desc()).all()
 
     return render_template('profile.html', user={'username': username}, posts=db_posts)
+
 
 @app.route('/tweets', methods=['GET', 'POST'])
 def tweets():
