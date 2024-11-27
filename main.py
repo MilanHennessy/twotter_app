@@ -1,6 +1,6 @@
 from flask import Flask, jsonify, redirect, url_for, render_template, session, request, flash
 import requests
-from models import User
+from models import Tweet, User
 from extensions import db
 from helpers import get_tweets, generate_random_like_count
 
@@ -32,35 +32,45 @@ def login():
         flash('Invalid username or password. Please try again.', 'danger')
     return render_template('login.html')
 
-
-# Home route
 @app.route('/', methods=['GET', 'POST'])
 def home():
     if 'user_id' not in session:
         return redirect(url_for('login'))
-    
+
     user_id = session.get('user_id')
     username = session.get('username')  # Fetch username from session
 
+    # Fetch posts from your database (db_posts)
+    db_posts = Tweet.query.filter_by(user_id=user_id).all()
+
+    # Fetch posts from JSONPlaceholder (jsonplaceholder_posts)
+    user, jsonplaceholder_posts = get_tweets(user_id)
+
+    # Handle tweet form submission via POST request
     if request.method == 'POST':
-        # Get the tweet content from the request
         content = request.json.get('content')
         if content:
-            # Simulate creating a new post with the username from the session
+            new_tweet = Tweet(content=content, user_id=user_id)
+            db.session.add(new_tweet)
+            db.session.commit()
+
+            # Add new post to the top of the feed (for database posts)
             new_post = {
-                'username': username,  # Use the logged-in user's username
-                'timestamp': 'Just now',  # Mock timestamp
+                'username': username,
+                'timestamp': 'Just now',
                 'body': content,
-                'likeCount': generate_random_like_count()  # Simulate like count generation
+                'likeCount': generate_random_like_count()  # Generate random like count
             }
-            posts = get_tweets(user_id)[1]
-            posts.insert(0, new_post)  # Add the new post at the beginning of the list
-            return jsonify({"new_post": new_post, "posts": posts})
-    
+            db_posts.insert(0, new_post)  # Add the new post at the beginning
+
+            return jsonify({"new_post": new_post, "db_posts": db_posts})
     # Fetch user and posts
     user, posts = get_tweets(user_id)
-    user['username'] = username  # Ensure the correct username is displayed
-    return render_template('home.html', user=user, posts=posts)
+
+    # Ensure the correct username is displayed
+    user['username'] = username 
+    
+    return render_template('home.html', user=user, db_posts=db_posts, jsonplaceholder_posts=jsonplaceholder_posts)
 
 
 # Logout route
@@ -68,7 +78,6 @@ def home():
 def logout():
     session.clear()  # Clears the session to log the user out
     return redirect(url_for('login'))
-
 
 # Register route
 @app.route('/register', methods=['GET', 'POST'])
@@ -96,7 +105,6 @@ def register():
 
     return render_template('register.html')
 
-
 # Profile route
 @app.route('/profile')
 def profile():
@@ -111,7 +119,6 @@ def profile():
     user['username'] = username  # Ensure the correct username is displayed
 
     return render_template('profile.html', user=user, posts=posts)
-
 
 # Tweets route
 @app.route('/tweets', methods=['GET', 'POST'])
@@ -142,7 +149,6 @@ def tweets():
         tweets = response.json()
         return render_template('tweets.html', tweets=tweets)
     return "Error fetching tweets."
-
 
 if __name__ == '__main__':
     with app.app_context():

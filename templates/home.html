@@ -10,12 +10,10 @@
     <div class="container">
         <header>
             <!-- Display only the username -->
-            <h1>Welcome to MyApp, {{ user.username }}</h1>
+            <h1>Welcome to Twotter, {{ user.username }}</h1>
             <div class="profile-info">
-                <!-- Display avatar, username, and bio -->
-                <img src="{{ user.avatarUrl }}" alt="Profile Picture" class="profile-pic">
-                <h2>{{ user.username}}</h2> <!-- Replaced name with username -->
-                <p><strong>@{{ user.username }}</strong></p> <!-- Display username as handle -->
+                <h2>{{ user.username }}</h2>
+                <p><strong>@{{ user.username }}</strong></p>
                 <p class="bio">{{ user.bio }}</p>
             </div>
         </header>
@@ -34,12 +32,12 @@
             </form>
         </section>
 
-        <!-- Display Feed -->
+        <!-- Display Database Feed -->
         <section class="tweet-feed">
-            <h2>Your Feed</h2>
-            {% if posts %}
+            <h2>Your Feed (Database Posts)</h2>
+            {% if db_posts %}
                 <ul id="feed-list">
-                    {% for post in posts %}
+                    {% for post in db_posts %}
                         <li class="tweet">
                             <div class="tweet-header">
                                 <span class="username">@{{ post.username }}</span>
@@ -54,15 +52,39 @@
                     {% endfor %}
                 </ul>
             {% else %}
-                <p>No tweets available.</p>
+                <p>No database tweets available.</p>
+            {% endif %}
+        </section>
+
+        <!-- Display JSONPlaceholder Feed -->
+        <section class="tweet-feed">
+            <h2>JSONPlaceholder Feed</h2>
+            {% if jsonplaceholder_posts %}
+                <ul id="json-placeholder-feed">
+                    {% for post in jsonplaceholder_posts %}
+                        <li class="tweet">
+                            <div class="tweet-header">
+                                <span class="username">@{{ post.username }}</span>
+                                <span class="tweet-time">{{ post.timestamp }}</span>
+                            </div>
+                            <p class="tweet-body">{{ post.body }}</p>
+                            <div class="tweet-footer">
+                                <span class="like-count">{{ post.likeCount }} Likes</span>
+                                <button class="like-btn">Like</button>
+                            </div>
+                        </li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <p>No tweets from JSONPlaceholder available.</p>
             {% endif %}
         </section>
     </div>
 
     <script>
-        // Function to handle the tweet form submission asynchronously
+        // Handle tweet form submission via AJAX
         document.getElementById("tweet-form").addEventListener("submit", function(event) {
-            event.preventDefault(); // Prevent the default form submission
+            event.preventDefault(); // Prevent default form submission
 
             let content = document.getElementById("content").value;
             if (!content.trim()) return;
@@ -85,7 +107,7 @@
                 let tweetItem = document.createElement("li");
                 tweetItem.classList.add("tweet");
 
-                tweetItem.innerHTML = `
+                tweetItem.innerHTML = ` 
                     <div class="tweet-header">
                         <span class="username">@${newTweet.username}</span>
                         <span class="tweet-time">${newTweet.timestamp}</span>
@@ -96,7 +118,7 @@
                         <button class="like-btn">Like</button>
                     </div>
                 `;
-                feedList.insertBefore(tweetItem, feedList.firstChild); // Add new tweet at the top
+                feedList.insertBefore(tweetItem, feedList.firstChild); // Add the new tweet at the top
                 document.getElementById("content").value = ""; // Clear the tweet input field
             })
             .catch(error => {
@@ -104,7 +126,7 @@
             });
         });
 
-        // Optional JavaScript to handle like functionality (you may need to update the backend for actual like functionality)
+        // Handle like button click
         document.querySelectorAll('.like-btn').forEach(button => {
             button.addEventListener('click', function() {
                 let tweetItem = this.closest('.tweet');

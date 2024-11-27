@@ -1,5 +1,6 @@
 import random
 import requests
+from datetime import datetime
 
 # JSONPlaceholder API Base URL
 API_BASE_URL = "https://jsonplaceholder.typicode.com"
@@ -18,13 +19,13 @@ def generate_random_username():
 
 # Function to generate random like counts
 def generate_random_like_count():
-    # Create a random number between 0 and 100
+    # Create a random number between 0 and 10000
     likes = random.randint(0, 10000)
     # You can append random suffixes or modify it to your liking
     return f"{likes}"  # Returns a string like "12K" or "99M"
 
 
-# Fetch posts with usernames
+# Fetch posts with usernames and like counts
 def get_tweets(user_id):
     # Fetch user data (usernames) from JSONPlaceholder
     response_user = requests.get(f"{API_BASE_URL}/users/{user_id}")
@@ -38,9 +39,9 @@ def get_tweets(user_id):
     if response_posts.status_code == 200:
         posts = response_posts.json()
         for post in posts:
-            # Assign the correct username to each post
+            # Assign a random username to each post (could be specific user-related logic if needed)
             post['username'] = generate_random_username()
             post['likeCount'] = generate_random_like_count()  # Using the new function for random like count
-            post['timestamp'] = '2024-11-26 12:00:00'  # Mock timestamp
+            post['timestamp'] = datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')  # Use current timestamp
 
     return user, posts
