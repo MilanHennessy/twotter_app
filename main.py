@@ -39,8 +39,8 @@ def home():
     user_id = session.get('user_id')
     username = session.get('username')
 
-    # Fetch only 5 most recent posts from the database
-    db_posts = Tweet.query.filter_by(user_id=user_id).order_by(Tweet.created_at.desc()).limit(5).all()
+    # Fetch tweets from all users in the database, ordered by most recent
+    db_posts = Tweet.query.order_by(Tweet.created_at.desc()).limit(5).all()  # No filtering by user_id
 
     # If no posts are found, display a message
     if not db_posts:
@@ -103,11 +103,9 @@ def home():
     return render_template(
         'home.html',
         user={'username': username},
-        db_posts=db_posts,  # Ensure this is passed as a list of posts
+        db_posts=db_posts,  # Now this will display posts from any user
         jsonplaceholder_posts=jsonplaceholder_posts
     )
-
-
 
 
 @app.route('/logout')

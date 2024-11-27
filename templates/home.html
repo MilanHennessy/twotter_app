@@ -104,36 +104,33 @@
                     // Clear the tweet form after posting
                     document.getElementById("content").value = "";
 
-                    // Refresh the database feed by calling the server again to get the updated list
-                    fetch("{{ url_for('tweets') }}")
-                        .then(response => response.json())
-                        .then(updatedPosts => {
-                            let dbFeedList = document.getElementById("db-feed-list");
-                            dbFeedList.innerHTML = ''; // Clear the current list
+                    // Create a new tweet item based on the response data
+                    let newTweet = data.new_post; // This comes from the server response
 
-                            // Loop through the updated posts and add them to the feed
-                            updatedPosts.forEach(post => {
-                                let tweetItem = document.createElement("li");
-                                tweetItem.classList.add("tweet");
-                                tweetItem.setAttribute('data-tweet-id', post.id);
+                    let dbFeedList = document.getElementById("db-feed-list");
 
-                                tweetItem.innerHTML = `
-                        <div class="tweet-header">
-                            <span class="username">@${post.user.username}</span>
-                            <span class="tweet-time">${post.created_at}</span>
-                        </div>
-                        <p class="tweet-body">${post.content}</p>
-                        <div class="tweet-footer">
-                            <span class="like-count">${post.like_count} Likes</span>
-                            <button class="like-btn">Like</button>
-                        </div>
-                    `;
-                                dbFeedList.appendChild(tweetItem);
-                            });
+                    // Create the new tweet element
+                    let tweetItem = document.createElement("li");
+                    tweetItem.classList.add("tweet");
+                    tweetItem.setAttribute('data-tweet-id', newTweet.id);
 
-                            addLikeListeners();  // Rebind like buttons after updating the feed
-                        })
-                        .catch(error => console.error("Error refreshing the feed:", error));
+                    tweetItem.innerHTML = `
+            <div class="tweet-header">
+                <span class="username">@${newTweet.username}</span>
+                <span class="tweet-time">${newTweet.timestamp}</span>
+            </div>
+            <p class="tweet-body">${newTweet.body}</p>
+            <div class="tweet-footer">
+                <span class="like-count">${0} Likes</span>
+                <button class="like-btn">Like</button>
+            </div>
+        `;
+
+                    // Append the new tweet to the list of tweets
+                    dbFeedList.insertBefore(tweetItem, dbFeedList.firstChild);
+
+                    // Rebind like buttons after adding the new tweet
+                    addLikeListeners();
                 })
                 .catch(error => console.error("Error posting tweet:", error));
         });
