@@ -1,15 +1,16 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Home - MyApp</title>
+    <title>Home - Twotter</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
 </head>
+
 <body>
     <div class="container">
         <header>
-            <!-- Display only the username -->
             <h1>Welcome to Twotter, {{ user.username }}</h1>
             <div class="profile-info">
                 <h2>{{ user.username }}</h2>
@@ -32,109 +33,133 @@
             </form>
         </section>
 
-        <!-- Display Database Feed -->
+        <!-- Database Feed -->
         <section class="tweet-feed">
             <h2>Your Feed (Database Posts)</h2>
             {% if db_posts %}
-                <ul id="feed-list">
-                    {% for post in db_posts %}
-                        <li class="tweet">
-                            <div class="tweet-header">
-                                <span class="username">@{{ post.username }}</span>
-                                <span class="tweet-time">{{ post.timestamp }}</span>
-                            </div>
-                            <p class="tweet-body">{{ post.body }}</p>
-                            <div class="tweet-footer">
-                                <span class="like-count">{{ post.likeCount }} Likes</span>
-                                <button class="like-btn">Like</button>
-                            </div>
-                        </li>
-                    {% endfor %}
-                </ul>
+            <ul id="db-feed-list">
+                {% for post in db_posts %}
+                <li class="tweet" data-tweet-id="{{ post.id }}">
+                    <div class="tweet-header">
+                        <span class="username">@{{ post.user.username }}</span> <!-- Fetching username -->
+                        <span class="tweet-time">{{ post.created_at.strftime('%Y-%m-%d %H:%M:%S') }}</span>
+                    </div>
+                    <p class="tweet-body">{{ post.content }}</p>
+                    <div class="tweet-footer">
+                        <span class="like-count">{{ 0 }} Likes</span> <!-- Displaying like count -->
+                        <button class="like-btn">Like</button>
+                    </div>
+                </li>
+                {% endfor %}
+            </ul>
             {% else %}
-                <p>No database tweets available.</p>
+            <p>No database tweets available.</p>
             {% endif %}
+
+
         </section>
 
-        <!-- Display JSONPlaceholder Feed -->
+        <!-- JSONPlaceholder Feed -->
         <section class="tweet-feed">
             <h2>JSONPlaceholder Feed</h2>
             {% if jsonplaceholder_posts %}
-                <ul id="json-placeholder-feed">
-                    {% for post in jsonplaceholder_posts %}
-                        <li class="tweet">
-                            <div class="tweet-header">
-                                <span class="username">@{{ post.username }}</span>
-                                <span class="tweet-time">{{ post.timestamp }}</span>
-                            </div>
-                            <p class="tweet-body">{{ post.body }}</p>
-                            <div class="tweet-footer">
-                                <span class="like-count">{{ post.likeCount }} Likes</span>
-                                <button class="like-btn">Like</button>
-                            </div>
-                        </li>
-                    {% endfor %}
-                </ul>
+            <ul id="jsonplaceholder-feed">
+                {% for post in jsonplaceholder_posts %}
+                <li class="tweet" data-tweet-id="{{ post.id }}">
+                    <div class="tweet-header">
+                        <span class="username">@{{ post.username }}</span>
+                        <span class="tweet-time">{{ post.timestamp }}</span>
+                    </div>
+                    <p class="tweet-body">{{ post.body }}</p>
+                    <div class="tweet-footer">
+                        <span class="like-count">{{ post.likeCount }} Likes</span>
+                        <button class="like-btn">Like</button>
+                    </div>
+                </li>
+                {% endfor %}
+            </ul>
             {% else %}
-                <p>No tweets from JSONPlaceholder available.</p>
+            <p>No tweets from JSONPlaceholder available.</p>
             {% endif %}
         </section>
     </div>
 
     <script>
         // Handle tweet form submission via AJAX
-        document.getElementById("tweet-form").addEventListener("submit", function(event) {
-            event.preventDefault(); // Prevent default form submission
+        document.getElementById("tweet-form").addEventListener("submit", function (event) {
+            event.preventDefault();
 
             let content = document.getElementById("content").value;
             if (!content.trim()) return;
 
-            // Send the tweet via AJAX
             fetch("{{ url_for('home') }}", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json"
                 },
-                body: JSON.stringify({
-                    content: content
+                body: JSON.stringify({ content: content })
+            })
+                .then(response => response.json())
+                .then(data => {
+                    // Clear the tweet form after posting
+                    document.getElementById("content").value = "";
+
+                    // Refresh the database feed by calling the server again to get the updated list
+                    fetch("{{ url_for('tweets') }}")
+                        .then(response => response.json())
+                        .then(updatedPosts => {
+                            let dbFeedList = document.getElementById("db-feed-list");
+                            dbFeedList.innerHTML = ''; // Clear the current list
+
+                            // Loop through the updated posts and add them to the feed
+                            updatedPosts.forEach(post => {
+                                let tweetItem = document.createElement("li");
+                                tweetItem.classList.add("tweet");
+                                tweetItem.setAttribute('data-tweet-id', post.id);
+
+                                tweetItem.innerHTML = `
+                        <div class="tweet-header">
+                            <span class="username">@${post.user.username}</span>
+                            <span class="tweet-time">${post.created_at}</span>
+                        </div>
+                        <p class="tweet-body">${post.content}</p>
+                        <div class="tweet-footer">
+                            <span class="like-count">${post.like_count} Likes</span>
+                            <button class="like-btn">Like</button>
+                        </div>
+                    `;
+                                dbFeedList.appendChild(tweetItem);
+                            });
+
+                            addLikeListeners();  // Rebind like buttons after updating the feed
+                        })
+                        .catch(error => console.error("Error refreshing the feed:", error));
                 })
-            })
-            .then(response => response.json())
-            .then(data => {
-                // Update the tweet feed with the new tweet
-                let feedList = document.getElementById("feed-list");
-                let newTweet = data.new_post;
-                let tweetItem = document.createElement("li");
-                tweetItem.classList.add("tweet");
-
-                tweetItem.innerHTML = ` 
-                    <div class="tweet-header">
-                        <span class="username">@${newTweet.username}</span>
-                        <span class="tweet-time">${newTweet.timestamp}</span>
-                    </div>
-                    <p class="tweet-body">${newTweet.body}</p>
-                    <div class="tweet-footer">
-                        <span class="like-count">${newTweet.likeCount} Likes</span>
-                        <button class="like-btn">Like</button>
-                    </div>
-                `;
-                feedList.insertBefore(tweetItem, feedList.firstChild); // Add the new tweet at the top
-                document.getElementById("content").value = ""; // Clear the tweet input field
-            })
-            .catch(error => {
-                console.error("Error posting tweet:", error);
-            });
+                .catch(error => console.error("Error posting tweet:", error));
         });
 
-        // Handle like button click
-        document.querySelectorAll('.like-btn').forEach(button => {
-            button.addEventListener('click', function() {
-                let tweetItem = this.closest('.tweet');
-                let likeCount = tweetItem.querySelector('.like-count');
-                let currentLikes = parseInt(likeCount.textContent);
-                likeCount.textContent = (currentLikes + 1) + " Likes";
+
+        // Handle like button clicks
+        function addLikeListeners() {
+            document.querySelectorAll('.like-btn').forEach(button => {
+                button.addEventListener("click", function () {
+                    let tweetItem = this.closest(".tweet");
+                    let likeCount = tweetItem.querySelector(".like-count");
+                    let currentLikes = parseInt(likeCount.textContent.split(' ')[0]);
+                    likeCount.textContent = `${currentLikes + 1} Likes`;
+
+                    // Send like update to server (optional)
+                    let tweetId = tweetItem.getAttribute('data-tweet-id');
+                    fetch(`{{ url_for('tweets') }}/${tweetId}`, { method: "POST" })
+                        .catch(error => console.error("Error liking tweet:", error));
+                });
             });
-        });
+        }
+
+        // Attach like listeners to both feeds
+        addLikeListeners();
     </script>
+
 </body>
+
 </html>

@@ -25,23 +25,38 @@ def generate_random_like_count():
     return f"{likes}"  # Returns a string like "12K" or "99M"
 
 
-# Fetch posts with usernames and like counts
-def get_tweets(user_id):
-    # Fetch user data (usernames) from JSONPlaceholder
-    response_user = requests.get(f"{API_BASE_URL}/users/{user_id}")
-    user = None
-    if response_user.status_code == 200:
-        user = response_user.json()
+def generate_random_username():
+    # A pool of random usernames for diversity
+    return random.choice([
+        "SkyDiver12", "CoolCat", "SpaceExplorer", "SunsetLover", "OceanBreeze",
+        "MountainClimber", "TechGuru", "FoodieLife", "GameMaster", "ArtisticSoul"
+    ])
 
-    # Fetch posts (tweets) from JSONPlaceholder API
-    response_posts = requests.get(f"{API_BASE_URL}/posts", params={"userId": user_id})
-    posts = []
-    if response_posts.status_code == 200:
+def get_tweets(num_posts=5):
+    try:
+        # Fetch all posts from JSONPlaceholder
+        response_posts = requests.get(f"{API_BASE_URL}/posts")
+        if response_posts.status_code != 200:
+            print("Failed to fetch posts. Returning an empty list.")
+            return []
+
         posts = response_posts.json()
-        for post in posts:
-            # Assign a random username to each post (could be specific user-related logic if needed)
-            post['username'] = generate_random_username()
-            post['likeCount'] = generate_random_like_count()  # Using the new function for random like count
-            post['timestamp'] = datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')  # Use current timestamp
+        # Shuffle posts to randomize their order
+        random.shuffle(posts)
+        selected_posts = posts[:num_posts]
 
-    return user, posts
+        # Enrich posts with random usernames, like counts, and timestamps
+        enriched_posts = []
+        for post in selected_posts:
+            enriched_posts.append({
+                'username': generate_random_username(),
+                'body': post['body'],
+                'likeCount': generate_random_like_count(),
+                'timestamp': datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')
+            })
+
+        return enriched_posts
+
+    except Exception as e:
+        print(f"An error occurred: {e}")
+        return []
