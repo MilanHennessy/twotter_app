@@ -46,7 +46,8 @@
                     </div>
                     <p class="tweet-body">{{ post.content }}</p>
                     <div class="tweet-footer">
-                        <span class="like-count">{{ 0 }} Likes</span> <!-- Displaying like count -->
+                        <span class="like-count">{{ post.like_count }} Likes</span>
+                        <!-- Use like_count from the database -->
                         <button class="like-btn">Like</button>
                     </div>
                 </li>
@@ -55,9 +56,8 @@
             {% else %}
             <p>No database tweets available.</p>
             {% endif %}
-
-
         </section>
+
 
         <!-- JSONPlaceholder Feed -->
         <section class="tweet-feed">
@@ -105,7 +105,7 @@
                     document.getElementById("content").value = "";
 
                     // Create a new tweet item based on the response data
-                    let newTweet = data.new_post; // This comes from the server response
+                    let newTweet = data.new_post;
 
                     let dbFeedList = document.getElementById("db-feed-list");
 
@@ -115,16 +115,16 @@
                     tweetItem.setAttribute('data-tweet-id', newTweet.id);
 
                     tweetItem.innerHTML = `
-            <div class="tweet-header">
-                <span class="username">@${newTweet.username}</span>
-                <span class="tweet-time">${newTweet.timestamp}</span>
-            </div>
-            <p class="tweet-body">${newTweet.body}</p>
-            <div class="tweet-footer">
-                <span class="like-count">${0} Likes</span>
-                <button class="like-btn">Like</button>
-            </div>
-        `;
+        <div class="tweet-header">
+            <span class="username">@${newTweet.username}</span>
+            <span class="tweet-time">${newTweet.timestamp}</span>
+        </div>
+        <p class="tweet-body">${newTweet.body}</p>
+        <div class="tweet-footer">
+            <span class="like-count">${newTweet.likeCount} Likes</span>
+            <button class="like-btn">Like</button>
+        </div>
+    `;
 
                     // Append the new tweet to the list of tweets
                     dbFeedList.insertBefore(tweetItem, dbFeedList.firstChild);
@@ -135,19 +135,23 @@
                 .catch(error => console.error("Error posting tweet:", error));
         });
 
-
         // Handle like button clicks
         function addLikeListeners() {
             document.querySelectorAll('.like-btn').forEach(button => {
                 button.addEventListener("click", function () {
                     let tweetItem = this.closest(".tweet");
-                    let likeCount = tweetItem.querySelector(".like-count");
-                    let currentLikes = parseInt(likeCount.textContent.split(' ')[0]);
-                    likeCount.textContent = `${currentLikes + 1} Likes`;
-
-                    // Send like update to server (optional)
+                    let likeCountElement = tweetItem.querySelector(".like-count");
                     let tweetId = tweetItem.getAttribute('data-tweet-id');
-                    fetch(`{{ url_for('tweets') }}/${tweetId}`, { method: "POST" })
+
+                    // Send a POST request to increment the like count
+                    fetch(`/like/${tweetId}`, {
+                        method: 'POST'
+                    })
+                        .then(response => response.json())
+                        .then(data => {
+                            // Update the like count displayed in the tweet
+                            likeCountElement.textContent = `${data.like_count} Likes`;
+                        })
                         .catch(error => console.error("Error liking tweet:", error));
                 });
             });
@@ -155,6 +159,7 @@
 
         // Attach like listeners to both feeds
         addLikeListeners();
+
     </script>
 
 </body>

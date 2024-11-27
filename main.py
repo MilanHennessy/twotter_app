@@ -88,7 +88,7 @@ def home():
                 'username': username,
                 'timestamp': new_tweet.created_at.strftime('%Y-%m-%d %H:%M:%S'),
                 'body': new_tweet.content,
-                'likeCount': generate_random_like_count()
+                'likeCount': new_tweet.like_count  # Use the like_count from the database
             }
 
             # If the request is from AJAX (JSON), return the new tweet data
@@ -99,6 +99,7 @@ def home():
 
         return jsonify({"error": "Content is required"}), 400
 
+
     # Render the template with the user and post data
     return render_template(
         'home.html',
@@ -106,6 +107,22 @@ def home():
         db_posts=db_posts,  # Now this will display posts from any user
         jsonplaceholder_posts=jsonplaceholder_posts
     )
+
+@app.route('/like/<int:tweet_id>', methods=['POST'])
+def like_tweet(tweet_id):
+    if 'user_id' not in session:
+        return jsonify({"error": "User not logged in"}), 403
+    
+    # Find the tweet by ID
+    tweet = Tweet.query.get_or_404(tweet_id)
+    
+    # Increment the like count
+    tweet.like_count += 1
+    
+    # Commit the changes to the database
+    db.session.commit()
+    
+    return jsonify({"like_count": tweet.like_count}), 200
 
 
 @app.route('/logout')

@@ -27,6 +27,7 @@
                         <li class="tweet">
                             <strong>{{ post.content }}</strong>  <!-- Display tweet content -->
                             <p>{{ post.created_at.strftime('%Y-%m-%d %H:%M:%S') }}</p>  <!-- Display timestamp -->
+                            <p><strong>{{ post.like_count }}</strong> Likes</p>  <!-- Display like count -->
                         </li>
                     {% endfor %}
                 </ul>
