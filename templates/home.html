@@ -9,34 +9,45 @@
 <body>
     <div class="container">
         <header>
-            <h1>Welcome to MyApp, {{ user['name'] }}</h1>
+            <!-- Display only the username -->
+            <h1>Welcome to MyApp, {{ user.username }}</h1>
             <div class="profile-info">
-                <img src="{{ user['avatarUrl'] }}" alt="Profile Picture" class="profile-pic">
-                <h2>{{ user['name'] }}</h2>
-                <p><strong>@{{ user['username'] }}</strong></p>
-                <p class="bio">{{ user['bio'] }}</p>
+                <!-- Display avatar, username, and bio -->
+                <img src="{{ user.avatarUrl }}" alt="Profile Picture" class="profile-pic">
+                <h2>{{ user.username}}</h2> <!-- Replaced name with username -->
+                <p><strong>@{{ user.username }}</strong></p> <!-- Display username as handle -->
+                <p class="bio">{{ user.bio }}</p>
             </div>
         </header>
 
         <div class="actions">
-            <a href="{{ url_for('tweets') }}" class="btn">Post a Tweet</a>
             <a href="{{ url_for('profile') }}" class="btn">Go to Profile</a>
             <a href="{{ url_for('logout') }}" class="btn">Logout</a>
         </div>
 
+        <!-- Add Tweet Form -->
+        <section class="tweet-form">
+            <h2>What's on your mind?</h2>
+            <form id="tweet-form" action="{{ url_for('home') }}" method="POST">
+                <textarea name="content" id="content" rows="4" placeholder="Write your tweet..." required></textarea>
+                <button type="submit" class="btn">Tweet</button>
+            </form>
+        </section>
+
+        <!-- Display Feed -->
         <section class="tweet-feed">
             <h2>Your Feed</h2>
             {% if posts %}
-                <ul>
+                <ul id="feed-list">
                     {% for post in posts %}
                         <li class="tweet">
                             <div class="tweet-header">
-                                <span class="username">@{{ post['username'] }}</span>
-                                <span class="tweet-time">{{ post['timestamp'] }}</span>
+                                <span class="username">@{{ post.username }}</span>
+                                <span class="tweet-time">{{ post.timestamp }}</span>
                             </div>
-                            <p class="tweet-body">{{ post['body'] }}</p>
+                            <p class="tweet-body">{{ post.body }}</p>
                             <div class="tweet-footer">
-                                <span class="like-count">{{ post['likeCount'] }} Likes</span>
+                                <span class="like-count">{{ post.likeCount }} Likes</span>
                                 <button class="like-btn">Like</button>
                             </div>
                         </li>
@@ -46,10 +57,53 @@
                 <p>No tweets available.</p>
             {% endif %}
         </section>
-        
     </div>
 
     <script>
+        // Function to handle the tweet form submission asynchronously
+        document.getElementById("tweet-form").addEventListener("submit", function(event) {
+            event.preventDefault(); // Prevent the default form submission
+
+            let content = document.getElementById("content").value;
+            if (!content.trim()) return;
+
+            // Send the tweet via AJAX
+            fetch("{{ url_for('home') }}", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    content: content
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                // Update the tweet feed with the new tweet
+                let feedList = document.getElementById("feed-list");
+                let newTweet = data.new_post;
+                let tweetItem = document.createElement("li");
+                tweetItem.classList.add("tweet");
+
+                tweetItem.innerHTML = `
+                    <div class="tweet-header">
+                        <span class="username">@${newTweet.username}</span>
+                        <span class="tweet-time">${newTweet.timestamp}</span>
+                    </div>
+                    <p class="tweet-body">${newTweet.body}</p>
+                    <div class="tweet-footer">
+                        <span class="like-count">${newTweet.likeCount} Likes</span>
+                        <button class="like-btn">Like</button>
+                    </div>
+                `;
+                feedList.insertBefore(tweetItem, feedList.firstChild); // Add new tweet at the top
+                document.getElementById("content").value = ""; // Clear the tweet input field
+            })
+            .catch(error => {
+                console.error("Error posting tweet:", error);
+            });
+        });
+
         // Optional JavaScript to handle like functionality (you may need to update the backend for actual like functionality)
         document.querySelectorAll('.like-btn').forEach(button => {
             button.addEventListener('click', function() {
