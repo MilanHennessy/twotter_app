@@ -49,33 +49,33 @@ def home():
     if not db_posts:
         flash('No tweets found in your feed.', 'info')
 
-    # Fetch posts from JSONPlaceholder
+  # Fetch posts from JSONPlaceholder
     jsonplaceholder_posts = []
     posts_response = requests.get("https://jsonplaceholder.typicode.com/posts")
     users_response = requests.get("https://jsonplaceholder.typicode.com/users")
 
     if posts_response.status_code == 200 and users_response.status_code == 200:
-        posts = posts_response.json()  # Ensure 'posts' is defined
+        posts = posts_response.json()
         users = users_response.json()
 
-        # Extract usernames and shuffle them for randomness
         usernames = [user['username'] for user in users]
         random.shuffle(usernames)
-
-        # Shuffle posts to simulate randomness
         random.shuffle(posts)
-        selected_posts = posts[:5]  # Take the first 5 posts after shuffling
+        selected_posts = posts[:5]  # Take the first 5 posts
 
         for post in selected_posts:
-            # Assign a random username from the shuffled list
-            username2 = random.choice(usernames)
+            # Fetch only the first comment for the post
+            comments_response = requests.get(f"https://jsonplaceholder.typicode.com/comments?postId={post['id']}")
+            comment = comments_response.json()[0] if comments_response.status_code == 200 and comments_response.json() else None
 
             jsonplaceholder_posts.append({
-                'username': username2,
+                'id': post['id'],
+                'username': random.choice(usernames),
                 'body': post['body'],
-                'timestamp': datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S'),  # Use current timestamp
-                'likeCount': random.randint(1, 10000),  # Generate a random like count
-                'liked': random.choice([True, False])  # Randomly set liked status
+                'timestamp': datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S'),
+                'likeCount': random.randint(1, 100),
+                'liked': random.choice([True, False]),
+                'comment': {'name':  random.choice(usernames), 'body': comment['body']} if comment else None,
             })
 
     # Check which posts the user has liked (use db_posts here as a safe reference)

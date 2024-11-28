@@ -133,6 +133,32 @@ form button:hover {
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
 }
 
+
+/* General Comment Styles */
+.comment {
+  background-color: #f9f9f9; /* lighter background for differentiation */
+  padding: 10px;
+  border-radius: 5px;
+  margin-top: 10px;
+  margin-left: 20px; /* indented from main tweet */
+  font-size: 0.85rem; /* smaller than tweet content */
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1); /* subtle shadow */
+}
+
+/* Username in Comments */
+.comment strong {
+  font-size: 0.8rem; /* smaller than main tweet usernames */
+  color: #1DA1F2; /* Twitter blue color */
+}
+
+/* Comment Text */
+.comment p {
+  margin: 5px 0;
+  font-size: 0.8rem; /* slightly smaller text size */
+  color: #333; /* readable text color */
+}
+
+
 .tweet .username {
   font-weight: bold;
   color: #1da1f2;
