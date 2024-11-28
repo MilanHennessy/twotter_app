@@ -9,7 +9,12 @@ class User(db.Model):
     password_hash = db.Column(db.String(128), nullable=False)
 
     # Relationship to Tweets
-    tweets = db.relationship('Tweet', backref='user', lazy=True)
+    tweets = db.relationship(
+        'Tweet', backref='user', lazy=True, cascade="all, delete-orphan"
+    )
+    liked_tweets = db.relationship(
+        'Like', backref='user', lazy=True, cascade="all, delete-orphan"
+    )
 
     def set_password(self, password):
         # Hash and set password
@@ -28,7 +33,9 @@ class Tweet(db.Model):
     like_count = db.Column(db.Integer, default=0)  # Number of likes
 
     # Relationship to Likes
-    likes = db.relationship('Like', backref='tweet_association', lazy=True)
+    likes = db.relationship(
+        'Like', backref='tweet', lazy=True, cascade="all, delete-orphan"
+    )
 
     def __repr__(self):
         return f'<Tweet {self.id}>'
@@ -62,6 +69,7 @@ class Tweet(db.Model):
             db.session.commit()
             return True  # Return True indicating it was liked
 
+# Like Model
 class Like(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
@@ -69,7 +77,3 @@ class Like(db.Model):
 
     # Enforce that each user can only like a tweet once
     __table_args__ = (db.UniqueConstraint('user_id', 'tweet_id', name='unique_user_tweet_like'),)
-
-    # Relationships
-    user = db.relationship('User', backref='liked_tweets', lazy=True)
-    tweet = db.relationship('Tweet', backref='likes_association', lazy=True)  # Changed to avoid conflict

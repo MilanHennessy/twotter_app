@@ -73,7 +73,7 @@ def home():
                 'username': random.choice(usernames),
                 'body': post['body'],
                 'timestamp': datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S'),
-                'likeCount': random.randint(1, 100),
+                'likeCount': random.randint(1, 10000),
                 'liked': random.choice([True, False]),
                 'comment': {'name':  random.choice(usernames), 'body': comment['body']} if comment else None,
             })
@@ -116,6 +116,61 @@ def home():
         jsonplaceholder_posts=jsonplaceholder_posts,
         liked_tweet_ids=liked_tweet_ids  # Pass the liked tweet IDs to the template
     )
+
+@app.route('/update_username', methods=['POST'])
+def update_username():
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+
+    user_id = session['user_id']
+    new_username = request.form.get('new_username')
+
+    # Check if the new username is already taken
+    existing_user = User.query.filter_by(username=new_username).first()
+    if existing_user:
+        flash('Username already taken. Please choose another one.', 'danger')
+        return redirect(url_for('profile'))  # Redirect back to the profile page if username is taken
+
+    # Update the username in the database
+    user = User.query.get(user_id)
+    if user:
+        user.username = new_username
+        db.session.commit()
+
+    # Update session data
+    session['username'] = new_username
+
+    flash('Username updated successfully!', 'success')
+    return redirect(url_for('profile'))  # Redirect to profile after successful update
+
+@app.route('/delete_account', methods=['POST'])
+def delete_account():
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+
+    user_id = session['user_id']
+    
+    # Delete all tweets related to the user
+    tweets = Tweet.query.filter_by(user_id=user_id).all()
+    for tweet in tweets:
+        db.session.delete(tweet)
+    
+    # Delete all likes related to the user
+    likes = Like.query.filter_by(user_id=user_id).all()
+    for like in likes:
+        db.session.delete(like)
+    
+    # Delete the user
+    user = User.query.get(user_id)
+    if user:
+        db.session.delete(user)
+    
+    db.session.commit()
+
+    # Clear session and redirect to the login page
+    session.clear()
+    flash('Your account has been deleted successfully.', 'success')
+    return redirect(url_for('login'))
 
 
 @app.route('/like/<int:tweet_id>', methods=['POST'])

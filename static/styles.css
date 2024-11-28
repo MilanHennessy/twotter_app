@@ -331,3 +331,16 @@ header {
   margin-top: 10px;
   margin-left: 10px;
 }
+
+/* Base Button Style (Twitter-like) */
+.btn2 {
+  background-color: #1DA1F2;  /* Twitter blue background */
+  color: white;               /* White text */
+  padding: 10px 20px;         /* Padding around text */
+  border: none;               /* Remove border */
+  cursor: pointer;           /* Pointer cursor on hover */
+  border-radius: 25px;        /* Rounded corners (more pronounced) */
+  font-size: 16px;            /* Text size */
+  transition: background-color 0.2s ease; /* Smooth background transition */
+  font-weight: 600;           /* Slightly bolder text */
+}

@@ -6,6 +6,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Profile - MyApp</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <script>
+        // Function to toggle the visibility of the update username form
+        function toggleUsernameForm() {
+            var form = document.getElementById('update-username-form');
+            form.style.display = (form.style.display === 'none' || form.style.display === '') ? 'block' : 'none';
+        }
+    </script>
 </head>
 
 <body>
@@ -14,6 +21,19 @@
             <h1>{{ user['username'] }}'s Profile</h1>
         </header>
 
+        <!-- Button to show the update username form -->
+        <section class="update-username">
+            <button onclick="toggleUsernameForm()" class="btn2">Update Username</button>
+            
+            <!-- Hidden form for updating username -->
+            <form id="update-username-form" action="{{ url_for('update_username') }}" method="POST" style="display: none;">
+                <label for="new_username">New Username:</label>
+                <input type="text" id="new_username" name="new_username" value="{{ user['username'] }}" required>
+                <button type="submit" class="btn">Update Username</button>
+            </form>
+        </section>
+
+        <!-- Profile Info Section -->
         <section class="profile-info">
             <p>Username: {{ user['username'] }}</p>
         </section>
@@ -27,9 +47,9 @@
             <ul>
                 {% for post in posts %}
                 <li class="tweet">
-                    <strong>{{ post.content }}</strong> <!-- Display tweet content -->
-                    <p>{{ post.created_at.strftime('%Y-%m-%d %H:%M:%S') }}</p> <!-- Display timestamp -->
-                    <p><strong>{{ post.like_count }}</strong> Likes</p> <!-- Display like count -->
+                    <strong>{{ post.content }}</strong>
+                    <p>{{ post.created_at.strftime('%Y-%m-%d %H:%M:%S') }}</p>
+                    <p><strong>{{ post.like_count }}</strong> Likes</p>
                 </li>
                 {% endfor %}
             </ul>
@@ -49,9 +69,6 @@
                     <strong>{{ tweet.content }}</strong>
                     <p>{{ tweet.created_at.strftime('%Y-%m-%d %H:%M:%S') }}</p>
                     <p><strong>{{ tweet.like_count }}</strong> Likes</p>
-                    <!-- Unlike Button -->
-                    <form action="{{ url_for('like_unlike', tweet_id=tweet.id) }}" method="post">
-                    </form>
                 </li>
                 {% endfor %}
             </ul>
@@ -60,6 +77,14 @@
             {% endif %}
         </section>
 
+        <!-- Delete Account Section -->
+        <section class="delete-account">
+            <form action="{{ url_for('delete_account') }}" method="POST">
+                <button type="submit" class="btn2" onclick="return confirm('Are you sure you want to delete your account? This action cannot be undone.')">
+                    Delete Account
+                </button>
+            </form>
+        </section>
 
     </div>
 </body>
