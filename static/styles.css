@@ -292,3 +292,16 @@ header {
   font-size: 1.2em;
   color: #14171a;
 }
+
+
+/* Unlike Button Styles */
+.unlike-btn {
+  background-color: #e0245e; /* Red color for Unlike */
+  color: white;
+  padding: 5px 15px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  margin-top: 10px;
+  margin-left: 10px;
+}

@@ -2,7 +2,7 @@ from datetime import datetime
 import random
 from flask import Flask, jsonify, redirect, url_for, render_template, session, request, flash
 import requests
-from models import Tweet, User
+from models import Like, Tweet, User
 from extensions import db
 from helpers import get_tweets, generate_random_like_count
 
@@ -42,6 +42,9 @@ def home():
     # Fetch tweets from all users in the database, ordered by most recent
     db_posts = Tweet.query.order_by(Tweet.created_at.desc()).limit(5).all()  # No filtering by user_id
 
+    # Check if the user has already liked a tweet
+    liked_tweet_ids = [like.tweet_id for like in Like.query.filter_by(user_id=user_id).all()]
+
     # If no posts are found, display a message
     if not db_posts:
         flash('No tweets found in your feed.', 'info')
@@ -52,9 +55,9 @@ def home():
     users_response = requests.get("https://jsonplaceholder.typicode.com/users")
 
     if posts_response.status_code == 200 and users_response.status_code == 200:
-        posts = posts_response.json()
+        posts = posts_response.json()  # Ensure 'posts' is defined
         users = users_response.json()
-        
+
         # Extract usernames and shuffle them for randomness
         usernames = [user['username'] for user in users]
         random.shuffle(usernames)
@@ -71,9 +74,15 @@ def home():
                 'username': username2,
                 'body': post['body'],
                 'timestamp': datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S'),  # Use current timestamp
-                'likeCount': random.randint(1, 10000)  # Generate a random like count
+                'likeCount': random.randint(1, 10000),  # Generate a random like count
+                'liked': random.choice([True, False])  # Randomly set liked status
             })
 
+    # Check which posts the user has liked (use db_posts here as a safe reference)
+    for post in db_posts:
+        post.liked_by_user = Like.query.filter_by(user_id=user_id, tweet_id=post.id).first() is not None
+
+    # Handle form submission to post a new tweet
     if request.method == 'POST':
         content = request.form.get('content') or (request.json and request.json.get('content'))
         if content:
@@ -99,30 +108,45 @@ def home():
 
         return jsonify({"error": "Content is required"}), 400
 
-
     # Render the template with the user and post data
     return render_template(
         'home.html',
         user={'username': username},
         db_posts=db_posts,  # Now this will display posts from any user
-        jsonplaceholder_posts=jsonplaceholder_posts
+        jsonplaceholder_posts=jsonplaceholder_posts,
+        liked_tweet_ids=liked_tweet_ids  # Pass the liked tweet IDs to the template
     )
 
+
 @app.route('/like/<int:tweet_id>', methods=['POST'])
-def like_tweet(tweet_id):
-    if 'user_id' not in session:
-        return jsonify({"error": "User not logged in"}), 403
-    
-    # Find the tweet by ID
-    tweet = Tweet.query.get_or_404(tweet_id)
-    
-    # Increment the like count
-    tweet.like_count += 1
-    
-    # Commit the changes to the database
+def like_unlike(tweet_id):
+    action = request.json.get('action')  # "like" or "unlike"
+    tweet = Tweet.query.get(tweet_id)
+
+    if not tweet:
+        return jsonify({'error': 'Tweet not found'}), 404
+
+    # Check if the user has already liked the tweet
+    user_id = session.get('user_id')
+    existing_like = Like.query.filter_by(user_id=user_id, tweet_id=tweet_id).first()
+
+    if action == 'like':
+        if not existing_like:
+            # Add like to the tweet
+            like = Like(user_id=user_id, tweet_id=tweet_id)
+            db.session.add(like)
+            tweet.like_count += 1
+        tweet.liked = True
+    elif action == 'unlike':
+        if existing_like:
+            # Remove like from the tweet
+            db.session.delete(existing_like)
+            tweet.like_count -= 1
+        tweet.liked = False
+
     db.session.commit()
-    
-    return jsonify({"like_count": tweet.like_count}), 200
+    return jsonify({'like_count': tweet.like_count, 'liked': tweet.liked})
+
 
 
 @app.route('/logout')
@@ -158,10 +182,15 @@ def profile():
     user_id = session['user_id']
     username = session['username']
 
-    # Query to fetch all tweets for the logged-in user
+    # Query to fetch all tweets for the logged-in user (tweets they've created)
     db_posts = Tweet.query.filter_by(user_id=user_id).order_by(Tweet.created_at.desc()).all()
 
-    return render_template('profile.html', user={'username': username}, posts=db_posts)
+    # Query to fetch all tweets liked by the logged-in user, including the username of the person who posted it
+    # Ensuring proper join with Like and User models
+    liked_tweets = db.session.query(Tweet, User.username).join(Like, Like.tweet_id == Tweet.id).join(User, User.id == Tweet.user_id).filter(Like.user_id == user_id).all()
+
+    return render_template('profile.html', user={'username': username}, posts=db_posts, liked_tweets=liked_tweets)
+
 
 
 @app.route('/tweets', methods=['GET', 'POST'])

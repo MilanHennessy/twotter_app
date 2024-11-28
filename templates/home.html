@@ -41,14 +41,19 @@
                 {% for post in db_posts %}
                 <li class="tweet" data-tweet-id="{{ post.id }}">
                     <div class="tweet-header">
-                        <span class="username">@{{ post.user.username }}</span> <!-- Fetching username -->
+                        <span class="username">@{{ post.user.username }}</span>
                         <span class="tweet-time">{{ post.created_at.strftime('%Y-%m-%d %H:%M:%S') }}</span>
                     </div>
                     <p class="tweet-body">{{ post.content }}</p>
                     <div class="tweet-footer">
                         <span class="like-count">{{ post.like_count }} Likes</span>
-                        <!-- Use like_count from the database -->
-                        <button class="like-btn">Like</button>
+                        <button class="like-btn" data-liked="{{ post.liked_by_user }}">
+                            {% if post.liked_by_user %}
+                            Unlike
+                            {% else %}
+                            Like
+                            {% endif %}
+                        </button>
                     </div>
                 </li>
                 {% endfor %}
@@ -115,16 +120,16 @@
                     tweetItem.setAttribute('data-tweet-id', newTweet.id);
 
                     tweetItem.innerHTML = `
-        <div class="tweet-header">
-            <span class="username">@${newTweet.username}</span>
-            <span class="tweet-time">${newTweet.timestamp}</span>
-        </div>
-        <p class="tweet-body">${newTweet.body}</p>
-        <div class="tweet-footer">
-            <span class="like-count">${newTweet.likeCount} Likes</span>
-            <button class="like-btn">Like</button>
-        </div>
-    `;
+                        <div class="tweet-header">
+                            <span class="username">@${newTweet.username}</span>
+                            <span class="tweet-time">${newTweet.timestamp}</span>
+                        </div>
+                        <p class="tweet-body">${newTweet.body}</p>
+                        <div class="tweet-footer">
+                            <span class="like-count">${newTweet.likeCount} Likes</span>
+                            <button class="like-btn">${newTweet.liked ? 'Unlike' : 'Like'}</button>
+                        </div>
+                    `;
 
                     // Append the new tweet to the list of tweets
                     dbFeedList.insertBefore(tweetItem, dbFeedList.firstChild);
@@ -135,33 +140,51 @@
                 .catch(error => console.error("Error posting tweet:", error));
         });
 
-        // Handle like button clicks
         function addLikeListeners() {
             document.querySelectorAll('.like-btn').forEach(button => {
                 button.addEventListener("click", function () {
                     let tweetItem = this.closest(".tweet");
                     let likeCountElement = tweetItem.querySelector(".like-count");
                     let tweetId = tweetItem.getAttribute('data-tweet-id');
+                    let isLikeAction = this.textContent.toLowerCase() === "like";
 
-                    // Send a POST request to increment the like count
+                    // Send a POST request to toggle like/unlike
                     fetch(`/like/${tweetId}`, {
-                        method: 'POST'
+                        method: 'POST',
+                        body: JSON.stringify({ action: isLikeAction ? 'like' : 'unlike' }),
+                        headers: {
+                            'Content-Type': 'application/json'
+                        }
                     })
                         .then(response => response.json())
                         .then(data => {
-                            // Update the like count displayed in the tweet
+                            if (data.error) {
+                                alert(data.error);  // Display error if any
+                                return;
+                            }
+
+                            // Update the like count
                             likeCountElement.textContent = `${data.like_count} Likes`;
+
+                            // Toggle button text
+                            if (isLikeAction) {
+                                this.textContent = "Unlike";
+                            } else {
+                                this.textContent = "Like";
+                            }
+
+                            // Re-enable button to allow for toggling again
+                            this.disabled = false;
                         })
-                        .catch(error => console.error("Error liking tweet:", error));
+                        .catch(error => console.error("Error liking/unliking tweet:", error));
                 });
             });
         }
 
-        // Attach like listeners to both feeds
+
+        // Attach like/unlike listeners to both feeds
         addLikeListeners();
-
     </script>
-
 </body>
 
 </html>

@@ -1,11 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Profile - MyApp</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
 </head>
+
 <body>
     <div class="container">
         <header>
@@ -16,25 +18,50 @@
             <p>Username: {{ user['username'] }}</p>
         </section>
 
-        <!-- Move the back to home button here -->
         <a href="{{ url_for('home') }}" class="btn">Back to Home</a>
 
+        <!-- User's Posts Section -->
         <section class="tweet-feed">
             <h2>Your Tweets</h2>
             {% if posts %}
-                <ul>
-                    {% for post in posts %}
-                        <li class="tweet">
-                            <strong>{{ post.content }}</strong>  <!-- Display tweet content -->
-                            <p>{{ post.created_at.strftime('%Y-%m-%d %H:%M:%S') }}</p>  <!-- Display timestamp -->
-                            <p><strong>{{ post.like_count }}</strong> Likes</p>  <!-- Display like count -->
-                        </li>
-                    {% endfor %}
-                </ul>
+            <ul>
+                {% for post in posts %}
+                <li class="tweet">
+                    <strong>{{ post.content }}</strong> <!-- Display tweet content -->
+                    <p>{{ post.created_at.strftime('%Y-%m-%d %H:%M:%S') }}</p> <!-- Display timestamp -->
+                    <p><strong>{{ post.like_count }}</strong> Likes</p> <!-- Display like count -->
+                </li>
+                {% endfor %}
+            </ul>
             {% else %}
-                <p>No tweets available.</p>
+            <p>No tweets available.</p>
             {% endif %}
         </section>
+
+        <!-- Display liked tweets section -->
+        <section class="liked-tweets">
+            <h2>Tweets You Liked</h2>
+            {% if liked_tweets %}
+            <ul>
+                {% for tweet, username in liked_tweets %}
+                <li class="tweet">
+                    <p><strong>{{ username }}</strong> tweeted:</p>
+                    <strong>{{ tweet.content }}</strong>
+                    <p>{{ tweet.created_at.strftime('%Y-%m-%d %H:%M:%S') }}</p>
+                    <p><strong>{{ tweet.like_count }}</strong> Likes</p>
+                    <!-- Unlike Button -->
+                    <form action="{{ url_for('like_unlike', tweet_id=tweet.id) }}" method="post">
+                    </form>
+                </li>
+                {% endfor %}
+            </ul>
+            {% else %}
+            <p>You have not liked any tweets yet.</p>
+            {% endif %}
+        </section>
+
+
     </div>
 </body>
+
 </html>
