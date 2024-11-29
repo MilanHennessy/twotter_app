@@ -1,0 +1,23 @@
+0000000000000000000000000000000000000000 49839e3b407660feea7efdeeb72ac7842414d7df milan456 <milanhennessy@gmail.com> 1731620359 -0500	commit (initial): first commit
+49839e3b407660feea7efdeeb72ac7842414d7df 8724e48918b039357e17540f739c52905bfe6040 milan456 <milanhennessy@gmail.com> 1731701703 -0500	commit: Reworked Dir, Linked frontend to backend, now have a basic template to work with
+8724e48918b039357e17540f739c52905bfe6040 e5677d7d2028db6f69869cf8d218f95b5e17e581 milan456 <milanhennessy@gmail.com> 1732148221 -0500	commit: Added login and registration functionality
+e5677d7d2028db6f69869cf8d218f95b5e17e581 a5bf173af9b7cbc2290995d76bb1f33aef3325e3 milan456 <milanhennessy@gmail.com> 1732304301 -0500	commit: added requirements.txt
+a5bf173af9b7cbc2290995d76bb1f33aef3325e3 4901a21ff8cb5f0e399e4dea2302d5b5cc0d5d3d milan456 <milanhennessy@gmail.com> 1732569343 -0500	commit: modified requirements.txt
+4901a21ff8cb5f0e399e4dea2302d5b5cc0d5d3d 8553e8254d21794c1cc3debd8a1b955b30c74089 milan456 <milanhennessy@gmail.com> 1732570211 -0500	commit: remodified requirements
+8553e8254d21794c1cc3debd8a1b955b30c74089 9e4b36eae451847e8742e2abe64bed2af5766068 milan456 <milanhennessy@gmail.com> 1732570543 -0500	commit: removed pandas
+9e4b36eae451847e8742e2abe64bed2af5766068 ea4cc5e5de65416ac097ee253e670fb12e6df7cb milan456 <milanhennessy@gmail.com> 1732571079 -0500	commit: moved files around
+ea4cc5e5de65416ac097ee253e670fb12e6df7cb 6b6e7964e2bc2592c9e7aac0aeebe4f066afae00 milan456 <milanhennessy@gmail.com> 1732574429 -0500	commit: modified main to include some basic oauth functionality
+6b6e7964e2bc2592c9e7aac0aeebe4f066afae00 6c2dc0be5f4a94ae44197e1c445a438a1b7748c5 milan456 <milanhennessy@gmail.com> 1732581459 -0500	commit: overhauled and made a basic app using twitter external api
+6c2dc0be5f4a94ae44197e1c445a438a1b7748c5 ad3577e028edd616530428f965199acd23185a0c milan456 <milanhennessy@gmail.com> 1732581879 -0500	commit: modified redirect to take me back to my html
+ad3577e028edd616530428f965199acd23185a0c d82dffddf5be95c121547429e0d951ee142ff9f1 milan456 <milanhennessy@gmail.com> 1732651782 -0500	commit: Overhauling project once more. Removing twitter's external api and insted using jsonplaceholder (technically and external api). Made a basic website with functionality to login and logout
+d82dffddf5be95c121547429e0d951ee142ff9f1 918cb2bdf2175c3519fcfa0624de63c560b0479a milan456 <milanhennessy@gmail.com> 1732652038 -0500	commit: fixed css
+918cb2bdf2175c3519fcfa0624de63c560b0479a 8b86093d5bd27e62325e923aba50ff2c01671bc1 milan456 <milanhennessy@gmail.com> 1732656719 -0500	commit: added a tweet feed that would generate when you open the site
+8b86093d5bd27e62325e923aba50ff2c01671bc1 88ef91db90d1149a068047a714c1c09af5e3d961 milan456 <milanhennessy@gmail.com> 1732665894 -0500	commit: fixed bug where it would display some random jsonplaceholder name as username
+88ef91db90d1149a068047a714c1c09af5e3d961 f84fde54c30eb0bd8fe950ae0d805f134f4911a4 milan456 <milanhennessy@gmail.com> 1732671694 -0500	commit: Splitting 2 feeds so that we have one for database and one for jsonplaceholder. Only jsonplaceholder works rn
+f84fde54c30eb0bd8fe950ae0d805f134f4911a4 3ca31724675027973fb6f08e3a11b09385e76ee0 milan456 <milanhennessy@gmail.com> 1732742412 -0500	commit: now have 2 working feeds.
+3ca31724675027973fb6f08e3a11b09385e76ee0 144de2836e2da073864bf0b22efea14c4aaa70f1 milan456 <milanhennessy@gmail.com> 1732743248 -0500	commit: fixed the profile to show all tweets from signed in user
+144de2836e2da073864bf0b22efea14c4aaa70f1 abcdb858a8664dfcb3923a6fbda906b79635bc8b milan456 <milanhennessy@gmail.com> 1732743570 -0500	commit: now able to see tweets from all users in database feed
+abcdb858a8664dfcb3923a6fbda906b79635bc8b c59075ba787dcf85e7ee48b9339f63ee04cb9b2f milan456 <milanhennessy@gmail.com> 1732744568 -0500	commit: added like functionality. Right now you can infinitely like though
+c59075ba787dcf85e7ee48b9339f63ee04cb9b2f 50b5a489e2a6f71bf137ead4539539f830cc31e3 milan456 <milanhennessy@gmail.com> 1732755381 -0500	commit: added like and unlike functionality. Bug when unlike and refresh page, will have to double click like button to like button
+50b5a489e2a6f71bf137ead4539539f830cc31e3 18d3d68a9a0084a2ffe19d6a9b51fb59e34c9d89 milan456 <milanhennessy@gmail.com> 1732758644 -0500	commit: added commenting functionality for jsonplaceholder
+18d3d68a9a0084a2ffe19d6a9b51fb59e34c9d89 3d3eb0a5bd3d495d4eea3043bbf67c15aaab04b1 milan456 <milanhennessy@gmail.com> 1732823283 -0500	commit: added delete account functionality
