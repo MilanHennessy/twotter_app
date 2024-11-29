@@ -141,7 +141,40 @@ By default, the app runs on `http://127.0.0.1:5000`.
 - Placeholder posts are enhanced with additional attributes like randomized usernames, timestamps, and comments.
 
 ---
+### **Architecture Diagrams**
 
-### **Summary**
-This project combines core CRUD functionalities with API integration, providing a basic Twitter-like application. The architecture is modular, making it easy to extend and scale as needed.
+#### **1. UML Package Diagram**
+
+The application follows the **Model-View-Controller (MVC)** architecture, where:
+
+- **Model**: Handles data and database logic (e.g., `User`, `Tweet`, and `Like` models).
+- **View**: Includes frontend templates rendered using Jinja2 (e.g., `index.html`, `profile.html`).
+- **Controller**: Defines the application's logic and routes (e.g., Flask route handlers in `main.py`).
+
+```plaintext
++--------------------+
+|   Controller       |
+|--------------------|
+| - Flask Routes     |
+| - JSONPlaceholder  |
++--------------------+
+         |
+         |
++--------------------+
+|      View          |
+|--------------------|
+| - Jinja Templates  |
+| - HTML/CSS/JS      |
++--------------------+
+         |
+         |
++--------------------+
+|      Model         |
+|--------------------|
+| - User Model       |
+| - Tweet Model      |
+| - Like Model       |
+| - Database (SQLite)|
++--------------------+
+
 
