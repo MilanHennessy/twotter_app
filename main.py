@@ -4,7 +4,6 @@ from flask import Flask, jsonify, redirect, url_for, render_template, session, r
 import requests
 from models import Like, Tweet, User
 from extensions import db
-from helpers import get_tweets, generate_random_like_count
 
 app = Flask(__name__)
 app.secret_key = 'your_secret_key'
