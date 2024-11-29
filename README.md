@@ -192,3 +192,8 @@ Below is a screenshot of the live application:
 
 By hosting the app on Render, deployment is streamlined, and updates to the GitHub repository automatically trigger a new build and deployment, ensuring the app is always up to date.
 
+### Page - Analysis
+
+![image](https://github.com/user-attachments/assets/7a59df57-69a1-44b0-b5a9-895deea7a1fa)
+
+
