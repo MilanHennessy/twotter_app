@@ -1,3 +1,9 @@
+# Milan Hennessy 100839808
+# This project is a twitter-like social media app with basic functionaloities such as creating an acoount
+# tweeting, and liking tweets. You are also able to update your username as well as delete your account.
+# We use jsonplaceholder api as our external api to grab a template feed to mimic a home feed that is always
+# updating. 
+
 from datetime import datetime
 import random
 from flask import Flask, jsonify, redirect, url_for, render_template, session, request, flash
@@ -8,11 +14,11 @@ from extensions import db
 app = Flask(__name__)
 app.secret_key = 'your_secret_key'
 
-# Database configuration
+
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///app.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
-# Initialize SQLAlchemy
+
 db.init_app(app)
 
 @app.route('/login', methods=['GET', 'POST'])
@@ -38,17 +44,17 @@ def home():
     user_id = session.get('user_id')
     username = session.get('username')
 
-    # Fetch tweets from all users in the database, ordered by most recent
-    db_posts = Tweet.query.order_by(Tweet.created_at.desc()).limit(5).all()  # No filtering by user_id
+    
+    db_posts = Tweet.query.order_by(Tweet.created_at.desc()).limit(5).all()  
 
-    # Check if the user has already liked a tweet
+    
     liked_tweet_ids = [like.tweet_id for like in Like.query.filter_by(user_id=user_id).all()]
 
-    # If no posts are found, display a message
+    
     if not db_posts:
         flash('No tweets found in your feed.', 'info')
 
-  # Fetch posts from JSONPlaceholder
+  
     jsonplaceholder_posts = []
     posts_response = requests.get("https://jsonplaceholder.typicode.com/posts")
     users_response = requests.get("https://jsonplaceholder.typicode.com/users")
@@ -60,10 +66,10 @@ def home():
         usernames = [user['username'] for user in users]
         random.shuffle(usernames)
         random.shuffle(posts)
-        selected_posts = posts[:5]  # Take the first 5 posts
+        selected_posts = posts[:5]  
 
         for post in selected_posts:
-            # Fetch only the first comment for the post
+            
             comments_response = requests.get(f"https://jsonplaceholder.typicode.com/comments?postId={post['id']}")
             comment = comments_response.json()[0] if comments_response.status_code == 200 and comments_response.json() else None
 
@@ -77,43 +83,43 @@ def home():
                 'comment': {'name':  random.choice(usernames), 'body': comment['body']} if comment else None,
             })
 
-    # Check which posts the user has liked (use db_posts here as a safe reference)
+    
     for post in db_posts:
         post.liked_by_user = Like.query.filter_by(user_id=user_id, tweet_id=post.id).first() is not None
 
-    # Handle form submission to post a new tweet
+    
     if request.method == 'POST':
         content = request.form.get('content') or (request.json and request.json.get('content'))
         if content:
-            # Save new tweet to the database
+            
             new_tweet = Tweet(content=content, user_id=user_id)
             db.session.add(new_tweet)
             db.session.commit()
 
-            # Create a new post to display dynamically
+            
             new_post = {
                 'id': new_tweet.id,
                 'username': username,
                 'timestamp': new_tweet.created_at.strftime('%Y-%m-%d %H:%M:%S'),
                 'body': new_tweet.content,
-                'likeCount': new_tweet.like_count  # Use the like_count from the database
+                'likeCount': new_tweet.like_count  
             }
 
-            # If the request is from AJAX (JSON), return the new tweet data
+            
             if request.is_json:
                 return jsonify({"new_post": new_post})
-            # If it's a regular form POST, redirect to avoid resubmitting the form
+            
             return redirect(url_for('home'))
 
         return jsonify({"error": "Content is required"}), 400
 
-    # Render the template with the user and post data
+    
     return render_template(
         'home.html',
         user={'username': username},
-        db_posts=db_posts,  # Now this will display posts from any user
+        db_posts=db_posts,  
         jsonplaceholder_posts=jsonplaceholder_posts,
-        liked_tweet_ids=liked_tweet_ids  # Pass the liked tweet IDs to the template
+        liked_tweet_ids=liked_tweet_ids  
     )
 
 @app.route('/update_username', methods=['POST'])
@@ -124,23 +130,23 @@ def update_username():
     user_id = session['user_id']
     new_username = request.form.get('new_username')
 
-    # Check if the new username is already taken
+    
     existing_user = User.query.filter_by(username=new_username).first()
     if existing_user:
         flash('Username already taken. Please choose another one.', 'danger')
-        return redirect(url_for('profile'))  # Redirect back to the profile page if username is taken
+        return redirect(url_for('profile'))  
 
-    # Update the username in the database
+    
     user = User.query.get(user_id)
     if user:
         user.username = new_username
         db.session.commit()
 
-    # Update session data
+    
     session['username'] = new_username
 
     flash('Username updated successfully!', 'success')
-    return redirect(url_for('profile'))  # Redirect to profile after successful update
+    return redirect(url_for('profile'))  
 
 @app.route('/delete_account', methods=['POST'])
 def delete_account():
@@ -149,24 +155,24 @@ def delete_account():
 
     user_id = session['user_id']
     
-    # Delete all tweets related to the user
+    
     tweets = Tweet.query.filter_by(user_id=user_id).all()
     for tweet in tweets:
         db.session.delete(tweet)
     
-    # Delete all likes related to the user
+    
     likes = Like.query.filter_by(user_id=user_id).all()
     for like in likes:
         db.session.delete(like)
     
-    # Delete the user
+    
     user = User.query.get(user_id)
     if user:
         db.session.delete(user)
     
     db.session.commit()
 
-    # Clear session and redirect to the login page
+    
     session.clear()
     flash('Your account has been deleted successfully.', 'success')
     return redirect(url_for('login'))
@@ -176,16 +182,16 @@ def delete_tweet(tweet_id):
     if 'user_id' not in session:
         return jsonify({'error': 'Unauthorized'}), 401
 
-    # Fetch the tweet by ID
+    
     tweet = Tweet.query.get(tweet_id)
     if not tweet:
         return jsonify({'error': 'Tweet not found'}), 404
 
-    # Ensure the logged-in user is the owner of the tweet
+    
     if tweet.user_id != session['user_id']:
         return jsonify({'error': 'Permission denied'}), 403
 
-    # Delete the tweet
+    
     db.session.delete(tweet)
     db.session.commit()
 
@@ -196,23 +202,23 @@ def update_tweet(tweet_id):
     if 'user_id' not in session:
         return jsonify({'error': 'Unauthorized'}), 401
 
-    # Fetch the tweet by ID
+    
     tweet = Tweet.query.get(tweet_id)
     if not tweet:
         return jsonify({'error': 'Tweet not found'}), 404
 
-    # Ensure the logged-in user is the owner of the tweet
+    
     if tweet.user_id != session['user_id']:
         return jsonify({'error': 'Permission denied'}), 403
 
-    # Update the tweet's content
+    
     data = request.json
     new_content = data.get('content')
     if not new_content:
         return jsonify({'error': 'Content is required'}), 400
 
     tweet.content = new_content
-    tweet.updated_at = datetime.utcnow()  # Update the timestamp if applicable
+    tweet.updated_at = datetime.utcnow()  
     db.session.commit()
 
     return jsonify({'message': 'Tweet updated successfully', 'tweet': {'id': tweet.id, 'content': tweet.content}})
@@ -220,26 +226,26 @@ def update_tweet(tweet_id):
 
 @app.route('/like/<int:tweet_id>', methods=['POST'])
 def like_unlike(tweet_id):
-    action = request.json.get('action')  # "like" or "unlike"
+    action = request.json.get('action')  
     tweet = Tweet.query.get(tweet_id)
 
     if not tweet:
         return jsonify({'error': 'Tweet not found'}), 404
 
-    # Check if the user has already liked the tweet
+    
     user_id = session.get('user_id')
     existing_like = Like.query.filter_by(user_id=user_id, tweet_id=tweet_id).first()
 
     if action == 'like':
         if not existing_like:
-            # Add like to the tweet
+            
             like = Like(user_id=user_id, tweet_id=tweet_id)
             db.session.add(like)
             tweet.like_count += 1
         tweet.liked = True
     elif action == 'unlike':
         if existing_like:
-            # Remove like from the tweet
+            
             db.session.delete(existing_like)
             tweet.like_count -= 1
         tweet.liked = False
@@ -282,11 +288,11 @@ def profile():
     user_id = session['user_id']
     username = session['username']
 
-    # Query to fetch all tweets for the logged-in user (tweets they've created)
+    
     db_posts = Tweet.query.filter_by(user_id=user_id).order_by(Tweet.created_at.desc()).all()
 
-    # Query to fetch all tweets liked by the logged-in user, including the username of the person who posted it
-    # Ensuring proper join with Like and User models
+    
+    
     liked_tweets = db.session.query(Tweet, User.username).join(Like, Like.tweet_id == Tweet.id).join(User, User.id == Tweet.user_id).filter(Like.user_id == user_id).all()
 
     return render_template('profile.html', user={'username': username}, posts=db_posts, liked_tweets=liked_tweets)
