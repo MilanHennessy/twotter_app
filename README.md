@@ -68,3 +68,80 @@ flask run
 ```
 
 By default, the app runs on `http://127.0.0.1:5000`.
+
+### **Usage**
+
+#### **User Workflow**
+1. **Register**: 
+   - Navigate to the `/register` page to create an account.
+   - Provide a username and password.
+   - Submit the form to register.
+
+2. **Login**:
+   - Navigate to the `/login` page to access your account.
+   - Enter your username and password.
+   - Upon successful login, you will be redirected to the home page.
+
+3. **Home Page**:
+   - The homepage displays:
+     - User-created tweets.
+     - Posts fetched from the JSONPlaceholder API.
+   - You can create new tweets or interact with existing ones (like, update, or delete).
+
+4. **Profile**:
+   - Navigate to `/profile` to view your own tweets and liked posts.
+   - Use options to update your username or delete your account.
+
+5. **Tweet Management**:
+   - Create a new tweet on the homepage or `/tweets`.
+   - Update or delete your tweets by navigating to the respective tweet actions.
+
+6. **Integration with JSONPlaceholder**:
+   - Posts from the JSONPlaceholder API are displayed alongside tweets.
+   - Posts include randomized usernames, timestamps, like counts, and top comments for demonstration.
+
+---
+
+### **Architecture**
+
+#### **Backend**
+- Built using **Flask**, a lightweight and modular Python web framework.
+- Includes the following models:
+  - **User**: Manages user credentials and authentication.
+  - **Tweet**: Handles user-created tweets and tracks interactions.
+  - **Like**: Establishes a many-to-many relationship between users and tweets.
+- API integration with **JSONPlaceholder** to fetch and display placeholder posts.
+
+#### **Frontend**
+- HTML templates rendered using Flask's Jinja2 templating engine.
+- Includes dynamic elements for displaying tweets and JSONPlaceholder posts.
+- Utilizes Bootstrap (or custom CSS) for responsive design.
+
+#### **Database**
+- **SQLite** used as the relational database.
+- Tables:
+  - `users`: Stores user details (username, password hash).
+  - `tweets`: Stores user-created tweets.
+  - `likes`: Tracks which users liked specific tweets.
+
+#### **Routes**
+- Core functionalities are organized into routes for ease of navigation:
+  - `/register`: User registration.
+  - `/login`: User authentication.
+  - `/`: Displays homepage with tweets and JSONPlaceholder posts.
+  - `/profile`: User profile with personal tweets and liked posts.
+  - `/tweets`: Create, update, or delete tweets.
+  - `/like/<int:tweet_id>`: Like or unlike tweets.
+  - `/update_username`: Update logged-in user’s username.
+  - `/delete_account`: Delete the user account.
+  - `/logout`: Log out of the application.
+
+#### **Third-party Integration**
+- The app fetches posts from the **JSONPlaceholder API** for demonstration purposes.
+- Placeholder posts are enhanced with additional attributes like randomized usernames, timestamps, and comments.
+
+---
+
+### **Summary**
+This project combines core CRUD functionalities with API integration, providing a basic Twitter-like application. The architecture is modular, making it easy to extend and scale as needed.
+
