@@ -177,4 +177,18 @@ The application follows the **Model-View-Controller (MVC)** architecture, where:
 | - Database (SQLite)|
 +--------------------+
 
+```
+
+### **Deployment**
+
+The application is deployed on **Render**, a modern cloud platform for hosting web applications. Render provides automatic deployment from a GitHub repository, making it easy to host and maintain the application.
+
+#### **Screenshot**
+Below is a screenshot of the live application:
+
+![image](https://github.com/user-attachments/assets/3e6e710b-0cab-45a5-9a3e-aa634887ad60)
+
+---
+
+By hosting the app on Render, deployment is streamlined, and updates to the GitHub repository automatically trigger a new build and deployment, ensuring the app is always up to date.
 
