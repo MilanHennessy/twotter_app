@@ -33,7 +33,38 @@ Ensure you have the following installed:
 
 ## Setup and Installation
 
-1. **Clone the repository**:
+### Clone the repository:
    ```bash
    git clone [https://github.com/MilanHennessy/twotter_app.git]
    cd twitter-clone
+  ```
+
+### Create a virtual environment (optional):
+
+```bash
+python3 -m venv venv
+source venv/bin/activate  # On Windows, use venv\Scripts\activate
+```
+
+### Install dependencies:
+
+```bash
+pip install -r requirements.txt
+```
+
+### Set up the database:
+
+```bash
+flask shell
+>>> from extensions import db
+>>> db.create_all()
+>>> exit()
+```
+
+### Run the application:
+
+```bash
+flask run
+```
+
+By default, the app runs on `http://127.0.0.1:5000`.
