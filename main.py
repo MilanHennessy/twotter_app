@@ -172,6 +172,52 @@ def delete_account():
     flash('Your account has been deleted successfully.', 'success')
     return redirect(url_for('login'))
 
+@app.route('/tweets/<int:tweet_id>', methods=['DELETE'])
+def delete_tweet(tweet_id):
+    if 'user_id' not in session:
+        return jsonify({'error': 'Unauthorized'}), 401
+
+    # Fetch the tweet by ID
+    tweet = Tweet.query.get(tweet_id)
+    if not tweet:
+        return jsonify({'error': 'Tweet not found'}), 404
+
+    # Ensure the logged-in user is the owner of the tweet
+    if tweet.user_id != session['user_id']:
+        return jsonify({'error': 'Permission denied'}), 403
+
+    # Delete the tweet
+    db.session.delete(tweet)
+    db.session.commit()
+
+    return jsonify({'message': 'Tweet deleted successfully'})
+
+@app.route('/tweets/<int:tweet_id>', methods=['PUT'])
+def update_tweet(tweet_id):
+    if 'user_id' not in session:
+        return jsonify({'error': 'Unauthorized'}), 401
+
+    # Fetch the tweet by ID
+    tweet = Tweet.query.get(tweet_id)
+    if not tweet:
+        return jsonify({'error': 'Tweet not found'}), 404
+
+    # Ensure the logged-in user is the owner of the tweet
+    if tweet.user_id != session['user_id']:
+        return jsonify({'error': 'Permission denied'}), 403
+
+    # Update the tweet's content
+    data = request.json
+    new_content = data.get('content')
+    if not new_content:
+        return jsonify({'error': 'Content is required'}), 400
+
+    tweet.content = new_content
+    tweet.updated_at = datetime.utcnow()  # Update the timestamp if applicable
+    db.session.commit()
+
+    return jsonify({'message': 'Tweet updated successfully', 'tweet': {'id': tweet.id, 'content': tweet.content}})
+
 
 @app.route('/like/<int:tweet_id>', methods=['POST'])
 def like_unlike(tweet_id):
