@@ -11,8 +11,8 @@ from extensions import db
 # OAuth provider configuration (example with Twitter)
 # twitter = oauth.remote_app(
 #     'twitter',
-#     consumer_key='your_consumer_key',
-#     consumer_secret='your_consumer_secret',
+#     consumer_key='Ov23liynhvVSRpMEP****',
+#     consumer_secret='a3f61f5386207d07c1f75b205c2364b7cc5****',
 #     request_token_params={
 #         'scope': 'email',
 #     },
